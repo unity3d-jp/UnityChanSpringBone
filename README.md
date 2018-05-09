@@ -1,11 +1,6 @@
 # UnityChanSpringBone
 UnityChan Sping Bone System for lightweight secondary animations.
 
-# Overview
-- [User Manuals(Japanese)]() (WIP)
-- [User Manuals(English)]()(WIP)
-
-
 # LICENSE
 MIT License
 
