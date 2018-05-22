@@ -16,35 +16,6 @@ namespace UTJ
 #endif
         }
 
-        public static string GetAutoSaveDirectory()
-        {
-            var dynamicsAutoSaveDirectory = Application.temporaryCachePath;
-            return dynamicsAutoSaveDirectory;
-        }
-
-        public static string GetAutoSavePath(string rootObjectName)
-        {
-            var dynamicsAutoSaveDirectory = GetAutoSaveDirectory();
-            return PathUtil.CombinePath(dynamicsAutoSaveDirectory, rootObjectName + "_DynamicsAutoSave.csv");
-        }
-
-        public static void AutoLoad(SpringManager springManager)
-        {
-            var autoSavePath = GetAutoSavePath(springManager.name);
-            if (System.IO.File.Exists(autoSavePath))
-            {
-                var sourceText = FileUtil.ReadAllText(autoSavePath);
-                DynamicsSetup.BuildFromRecordText(springManager.gameObject, springManager.gameObject, sourceText);
-            }
-        }
-
-        public static void AutoSave(SpringManager springManager)
-        {
-            var autoSavePath = GetAutoSavePath(springManager.name);
-            var sourceText = SpringBoneSerialization.BuildDynamicsSetupString(springManager.gameObject);
-            FileUtil.WriteAllText(autoSavePath, sourceText);
-        }
-
         // オブジェクトとその子供に当たっている全てのSpringBoneとSpringManagerを削除
         // この関数はDestroyImmediateを使うのでエディターの時以外は使わないでください！
         public static void DestroySpringManagersAndBones(GameObject rootObject)

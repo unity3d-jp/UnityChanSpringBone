@@ -310,11 +310,6 @@ namespace UTJ
                 }
             }
         }
-
-        private void OnDestroy()
-        {
-            SpringBoneSetup.AutoSave(this);
-        }
 #endif
     }
 }
