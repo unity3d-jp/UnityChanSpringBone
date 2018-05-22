@@ -71,7 +71,6 @@ namespace UTJ
 
             protected virtual void AppendProperties(StringBuilder builder, Component component)
             {
-                // Default implementation
                 var builderStrings = UnityComponentStringListBuilder.BuildBuilderStringList(component);
                 builder.Append(string.Join(",", builderStrings.ToArray()));
                 builder.Append(",");
@@ -95,8 +94,26 @@ namespace UTJ
             )
             {
                 // Default implementation
+                // First remove all old components of the same type
+                // Todo: What if we want two or more of the same type of component on the same GameObject?
+                var oldComponents = owner.GetComponents(componentType);
+                var newComponent = owner.AddComponent(componentType);
                 var rootObject = owner.transform.root.gameObject;
-                return definitionItems.DequeueComponent(componentType, rootObject);
+                if (definitionItems.DequeueComponent(newComponent, rootObject))
+                {
+                    // Succeeded; destroy the old components
+                    foreach (var oldComponent in oldComponents)
+                    {
+                        Object.DestroyImmediate(oldComponent);
+                    }
+                }
+                else
+                {
+                    // Failed; destroy the component we added
+                    Object.DestroyImmediate(newComponent);
+                    newComponent = null;
+                }
+                return newComponent;
             }
         }
     }

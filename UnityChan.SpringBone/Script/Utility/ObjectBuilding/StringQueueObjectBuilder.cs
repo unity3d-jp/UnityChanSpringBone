@@ -53,24 +53,19 @@ namespace UTJ
                 return gameObject.transform;
             }
 
-            public static Component DequeueComponent
+            public static bool DequeueComponent
             (
                 this Queue<string> queue,
-                System.Type type,
+                Component component,
                 GameObject rootObject = null,
                 IEnumerable<TypedStringToValueMap> valueMaps = null
             )
             {
-                if (type == typeof(Transform))
-                {
-                    return DequeueTransform(queue, rootObject);
-                }
-
+                var type = component.GetType();
                 var succeeded = true;
-                var item = rootObject.AddComponent(type);
                 try
                 {
-                    queue.DequeueFields(type, item, rootObject, valueMaps);
+                    queue.DequeueFields(type, component, rootObject, valueMaps);
                 }
                 catch (System.InvalidOperationException exception)
                 {
@@ -85,38 +80,7 @@ namespace UTJ
                     Debug.LogError("Error dequeueing fields for " + type.ToString() + "\n\n"
                         + exception.ToString());
                 }
-
-                if (!succeeded)
-                {
-                    Object.DestroyImmediate(item);
-                    item = null;
-                }
-                return item;
-            }
-
-            public static T DequeueComponent<T>
-            (
-                this Queue<string> queue,
-                GameObject rootObject = null,
-                IEnumerable<TypedStringToValueMap> valueMaps = null
-            )
-            where T : Component
-            {
-                return DequeueComponent(queue, typeof(T), rootObject, valueMaps) as T;
-            }
-
-            public static T DequeueComponent<T>
-            (
-                this Queue<string> queue,
-                GameObject rootObject,
-                TypedStringToValueMap valueMap
-            )
-            where T : MonoBehaviour
-            {
-                return DequeueComponent<T>(
-                    queue,
-                    rootObject,
-                    new TypedStringToValueMap[] { valueMap });
+                return succeeded;
             }
 
             public static void DequeueFields
