@@ -1,0 +1,11 @@
+{
+	"name": "com.unity.springbone",
+	"displayName": "Unity Chan Spring Bone",
+	"version": "1.1.0-preview",
+	"unity": "2018.3",
+	"description": "Sping Bone System for lightweight secondary animations.",
+	"keywords": ["animation"],
+	"category": "Animation",
+	"dependencies": {
+	}
+}
