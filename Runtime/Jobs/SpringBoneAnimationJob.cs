@@ -1,20 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
 using Unity.Collections;
+using UnityEditor.UI;
 using UnityEngine;
-using Unity.Mathematics;
-using UnityEngine.Experimental.PlayerLoop;
-using UnityEngine.Jobs;
-using Unity.Collections;
-using UnityEditor.Experimental.GraphView;
-using UnityEngine;
-#if UNITY_2019_3_OR_NEWER
 using UnityEngine.Animations;
-#else
+
+#if !UNITY_2019_3_OR_NEWER
 using UnityEngine.Experimental.Animations;
-
 #endif
-
 
 namespace Unity.Animations.SpringBones.Jobs
 {
@@ -40,6 +31,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public Quaternion skinAnimationLocalRotation;
         public Quaternion initialLocalRotation;
         public Quaternion actualLocalRotation;
+        public Quaternion currentLocoalRotation;
         public Vector3 currentTipPosition;
         public Vector3 previousTipPosition;
     }
@@ -47,11 +39,11 @@ namespace Unity.Animations.SpringBones.Jobs
     public struct SpringBoneJob : IAnimationJob
     {
         public TransformStreamHandle rootHandle;
+        public NativeArray<TransformStreamHandle> springBoneParentTransformHandles;
         public NativeArray<TransformStreamHandle> springBoneTransformHandles;
         public NativeArray<SpringBoneProperties> springBoneProperties; //read only
         public NativeArray<SpringBoneComponent> springBoneComponents;
 
-        // Manager level value
         public bool isPaused;
         public int simulationFrameRate;
         public float dynamicRatio;
@@ -64,11 +56,16 @@ namespace Unity.Animations.SpringBones.Jobs
         public bool collideWithGround;
         public float groundHeight;
 
-        struct TransformQueryCache
+        private struct TransformQueryCache
         {
+            public Vector3 parentPosition;
             public Quaternion parentRotation;
+            public Matrix4x4 parentLocalToGlobalMat;
+
             public Vector3 position;
-            public Vector3 rotation;
+            public Quaternion rotation;
+            public Quaternion localRotation;
+            public Matrix4x4 localToGlobalMat;
         }
         
         /// <summary>
@@ -102,37 +99,44 @@ namespace Unity.Animations.SpringBones.Jobs
         {
             var deltaTime = (simulationFrameRate > 0) ? (1f / simulationFrameRate) : stream.deltaTime;
 
-            for (var boneIndex = 0; boneIndex < springBoneComponents.Length; boneIndex++)
+            for (var index = 0; index < springBoneComponents.Length; index++)
             {
-                var bone = springBoneComponents[boneIndex];
-                var prop = springBoneProperties[boneIndex];
+                var bone = springBoneComponents[index];
+                var prop = springBoneProperties[index];
+                
+                springBoneParentTransformHandles[index].GetGlobalTR(stream, out var parentPos, out var parentRot);
+                springBoneTransformHandles[index].GetGlobalTR(stream, out var pos, out var rot);
+                var tc = new TransformQueryCache {
+                    parentPosition = parentPos,
+                    parentRotation = parentRot,
+                    parentLocalToGlobalMat = Matrix4x4.TRS(parentPos, parentRot, Vector3.one),
+                    position = pos,
+                    rotation = rot,
+                    localRotation = springBoneTransformHandles[index].GetLocalRotation(stream),
+                    localToGlobalMat = Matrix4x4.TRS(pos, rot, Vector3.one)
+                };
 
                 if (!isPaused)
                 {
-                    UpdateSpring(ref bone, ref prop, boneIndex, deltaTime, stream);
-                    SatisfyConstraintsAndComputeRotation(ref bone, ref prop, boneIndex, deltaTime, stream);
+                    UpdateSpring(ref bone, index, deltaTime, in prop, in tc);
+                    SatisfyConstraintsAndComputeRotation(ref bone, index, deltaTime, in prop, in tc);
                 }
 
-                UpdateRotation(ref bone, ref prop, boneIndex, stream);
+                UpdateRotation(ref bone, index, in prop, in tc);
 
-                springBoneComponents[boneIndex] = bone;
+                springBoneTransformHandles[index].SetLocalRotation(stream, bone.currentLocoalRotation);
+                springBoneComponents[index] = bone;
             }
         }
 
-        private void UpdateSpring(ref SpringBoneComponent bone, ref SpringBoneProperties prop, int index, float deltaTime, AnimationStream stream)
+        private void UpdateSpring(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             
-            bone.skinAnimationLocalRotation = springBoneTransformHandles[index].GetLocalRotation(stream);
+            bone.skinAnimationLocalRotation = tc.localRotation;
 
-//            var baseWorldRotation = transform.parent.rotation * initialLocalRotation;
-            var baseWorldRotation =
-                (index == 0
-                    ? rootHandle.GetRotation(stream)
-                    : springBoneTransformHandles[index - 1].GetRotation(stream)) * bone.initialLocalRotation;
+            var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
 
-            springBoneTransformHandles[index].GetGlobalTR(stream, out var position, out var rotation);
-            
-            var orientedInitialPosition = position + baseWorldRotation * prop.boneAxis * prop.springLength;
+            var orientedInitialPosition = tc.position + baseWorldRotation * prop.boneAxis * prop.springLength;
 
             // Hooke's law: force to push us to equilibrium
             var force = prop.stiffnessForce * (orientedInitialPosition - bone.currentTipPosition);
@@ -146,7 +150,7 @@ namespace Unity.Animations.SpringBones.Jobs
             bone.previousTipPosition = temp;
 
             // Inlined because FixBoneLength is slow
-            var headPosition = position;
+            var headPosition = tc.position;
             var headToTail = bone.currentTipPosition - headPosition;
             var magnitude = headToTail.magnitude;
             const float MagnitudeThreshold = 0.001f;
@@ -155,9 +159,7 @@ namespace Unity.Animations.SpringBones.Jobs
             {
                 // was originally this
                 //headToTail = transform.TransformDirection(boneAxis)
-                var localToGlobal = new Matrix4x4();
-                localToGlobal.SetTRS(position, rotation, Vector3.one);
-                headToTail = localToGlobal * headToTail;
+                headToTail = tc.localToGlobalMat * headToTail;
             }
             else
             {
@@ -167,15 +169,15 @@ namespace Unity.Animations.SpringBones.Jobs
             bone.currentTipPosition = headPosition + prop.springLength * headToTail;
         }
 
-        private void SatisfyConstraintsAndComputeRotation(ref SpringBoneComponent bone, ref SpringBoneProperties prop, 
-            int index, float deltaTime, AnimationStream stream)
+        private void SatisfyConstraintsAndComputeRotation(ref SpringBoneComponent bone, int index, float deltaTime,
+            in SpringBoneProperties prop, in TransformQueryCache tc)
         {
 //            if (enableLengthLimits)
 //            {
 //                currTipPos = ApplyLengthLimits(deltaTime);
 //            }
 
-            var hadCollision = false;
+//            var hadCollision = false;
 
 //            if (collideWithGround)
 //            {
@@ -189,35 +191,31 @@ namespace Unity.Animations.SpringBones.Jobs
 
             if (enableAngleLimits)
             {
-                ApplyAngleLimits(ref bone, ref prop, index, deltaTime, stream);
+                ApplyAngleLimits(ref bone, index, deltaTime, in prop, in tc);
             }
         }
 
-        private void UpdateRotation(ref SpringBoneComponent bone, ref SpringBoneProperties prop, int index, AnimationStream stream)
+        private void UpdateRotation(ref SpringBoneComponent bone, int index, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             if (float.IsNaN(bone.currentTipPosition.x)
                 | float.IsNaN(bone.currentTipPosition.y)
                 | float.IsNaN(bone.currentTipPosition.z))
             {
-                var parentRotation = rootHandle.GetRotation(stream);
-                var position = springBoneTransformHandles[index].GetPosition(stream);
-                var baseWorldRotation = parentRotation * bone.initialLocalRotation;
-                bone.currentTipPosition = position + baseWorldRotation * prop.boneAxis * prop.springLength;
+//                var parentRotation = rootHandle.GetRotation(stream);
+//                var position = springBoneTransformHandles[index].GetPosition(stream);
+                var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
+                bone.currentTipPosition = tc.position + baseWorldRotation * prop.boneAxis * prop.springLength;
                 bone.previousTipPosition = bone.currentTipPosition;
             }
 
-            bone.actualLocalRotation = ComputeLocalRotation(ref bone, ref prop, index, stream, bone.currentTipPosition);
-            var localRotation = Quaternion.Lerp(bone.skinAnimationLocalRotation, bone.actualLocalRotation, dynamicRatio);
-            springBoneTransformHandles[index].SetLocalRotation(stream, localRotation);
+            bone.actualLocalRotation = ComputeLocalRotation(ref bone, index, bone.currentTipPosition, in prop, in tc);
+            bone.currentLocoalRotation = Quaternion.Lerp(bone.skinAnimationLocalRotation, bone.actualLocalRotation, dynamicRatio);
         }
 
-        private Quaternion ComputeLocalRotation(ref SpringBoneComponent bone, ref SpringBoneProperties prop, int index, AnimationStream stream, Vector3 tipPosition)
+        private Quaternion ComputeLocalRotation(ref SpringBoneComponent bone, int index, Vector3 tipPosition, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
-            var parentRotation = rootHandle.GetRotation(stream);
-            var position = springBoneTransformHandles[index].GetPosition(stream);
-
-            var baseWorldRotation = parentRotation * bone.initialLocalRotation;
-            var worldBoneVector = tipPosition - position;
+            var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
+            var worldBoneVector = tipPosition - tc.position;
             var localBoneVector = Quaternion.Inverse(baseWorldRotation) * worldBoneVector;
             localBoneVector.Normalize();
 
@@ -227,46 +225,28 @@ namespace Unity.Animations.SpringBones.Jobs
             return outputRotation;
         }
         
-        private void ApplyAngleLimits(ref SpringBoneComponent bone, ref SpringBoneProperties prop, int index, float deltaTime, AnimationStream stream)
+        private void ApplyAngleLimits(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             if (!prop.yAngleLimits.active && !prop.zAngleLimits.active)
             {
                 return;
             }
 
-            var origin = springBoneTransformHandles[index].GetPosition(stream);
+            var origin = tc.position;
             var vector = bone.currentTipPosition - origin;
-
-            Vector3 pivotPosition;
-            Quaternion pivotRotation;
-
-            if (prop.isRootTransform)
-            {
-                springBoneTransformHandles[index].GetGlobalTR(stream, out pivotPosition, out pivotRotation);
-            }
-            else if (index == 0) {
-                rootHandle.GetGlobalTR(stream, out pivotPosition, out pivotRotation);
-            }
-            else
-            {
-                springBoneTransformHandles[index-1].GetGlobalTR(stream, out pivotPosition, out pivotRotation);
-            }
-
-            var mat = new Matrix4x4();
-            mat.SetTRS(pivotPosition, pivotRotation, Vector3.one);
             
-            var forward = mat * -Vector3.right;
+            var forward = tc.parentLocalToGlobalMat * -Vector3.right;
 
             if (prop.yAngleLimits.active)
             {
                 prop.yAngleLimits.ConstrainVector(
-                    mat * -Vector3.up, mat * -Vector3.forward, forward, prop.angularStiffness, deltaTime, ref vector);
+                    tc.parentLocalToGlobalMat * -Vector3.up, tc.parentLocalToGlobalMat * -Vector3.forward, forward, prop.angularStiffness, deltaTime, ref vector);
             }
 
             if (prop.zAngleLimits.active)
             {
                 prop.zAngleLimits.ConstrainVector(
-                    mat * -Vector3.forward, mat * -Vector3.up, forward, prop.angularStiffness, deltaTime, ref vector);
+                    tc.parentLocalToGlobalMat * -Vector3.forward, tc.parentLocalToGlobalMat * -Vector3.up, forward, prop.angularStiffness, deltaTime, ref vector);
             }
 
             bone.currentTipPosition = origin + vector;

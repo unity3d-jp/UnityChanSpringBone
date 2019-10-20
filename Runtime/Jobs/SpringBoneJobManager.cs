@@ -1,3 +1,5 @@
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -5,9 +7,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
 
-#if UNITY_2019_3_OR_NEWER
-using UnityEngine.Animations;
-#else
+#if !UNITY_2019_3_OR_NEWER
 using UnityEngine.Experimental.Animations;
 #endif
 
@@ -15,7 +15,7 @@ namespace Unity.Animations.SpringBones.Jobs
 {
     public class SpringBoneJobManager : MonoBehaviour
     {
-        [Header("Properties")] public bool automaticUpdates = true;
+        [Header("Properties")] 
         public bool isPaused = false;
         public int simulationFrameRate = 60;
         [Range(0f, 1f)] public float dynamicRatio = 0.5f;
@@ -30,10 +30,12 @@ namespace Unity.Animations.SpringBones.Jobs
         [Header("Ground Collision")] public bool collideWithGround = true;
         public float groundHeight = 0f;
 
-        PlayableGraph m_Graph;
-        public NativeArray<TransformStreamHandle> m_springBoneTransformHandles;
-        NativeArray<SpringBoneProperties> m_SpringBoneProperties;
-        NativeArray<SpringBoneComponent> m_springBoneComponents;
+        private PlayableGraph m_Graph;
+        private AnimationScriptPlayable m_SpringBonePlayable;
+        private  NativeArray<TransformStreamHandle> m_springBoneParentTransformHandles;
+        private  NativeArray<TransformStreamHandle> m_springBoneTransformHandles;
+        private NativeArray<SpringBoneProperties> m_SpringBoneProperties;
+        private NativeArray<SpringBoneComponent> m_springBoneComponents;
 
         private PlayableGraph InitializeGraph()
         {
@@ -41,6 +43,9 @@ namespace Unity.Animations.SpringBones.Jobs
             var animator = GetComponent<Animator>();
 
             var nSpringBones = springBones.Length;
+            m_springBoneParentTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+
             m_springBoneTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
                 NativeArrayOptions.UninitializedMemory);
             
@@ -52,6 +57,11 @@ namespace Unity.Animations.SpringBones.Jobs
             
             for (var i = 0; i < nSpringBones; ++i)
             {
+                m_springBoneParentTransformHandles[i] = animator.BindStreamTransform(springBones[i].transform.parent);
+            }
+
+            for (var i = 0; i < nSpringBones; ++i)
+            {
                 m_springBoneTransformHandles[i] = animator.BindStreamTransform(springBones[i].transform);
             }
             
@@ -60,6 +70,7 @@ namespace Unity.Animations.SpringBones.Jobs
             {
                 rootHandle = animator.BindStreamTransform(transform),
                 springBoneTransformHandles = m_springBoneTransformHandles,
+                springBoneParentTransformHandles = m_springBoneParentTransformHandles,
                 springBoneProperties = m_SpringBoneProperties,
                 springBoneComponents = m_springBoneComponents,
                 isPaused = isPaused,
@@ -81,9 +92,9 @@ namespace Unity.Animations.SpringBones.Jobs
             var graph = PlayableGraph.Create("SpringBone");
             graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
-            var springBonePlayable = AnimationScriptPlayable.Create(graph, springBoneJob);
+            m_SpringBonePlayable = AnimationScriptPlayable.Create(graph, springBoneJob);
             var output = AnimationPlayableOutput.Create(graph, "SpringBoneOutput", animator);
-            output.SetSourcePlayable(springBonePlayable);
+            output.SetSourcePlayable(m_SpringBonePlayable);
 
             return graph;
         }
@@ -229,6 +240,7 @@ namespace Unity.Animations.SpringBones.Jobs
         
         private void FinalizeGraph()
         {
+            m_springBoneParentTransformHandles.Dispose();
             m_springBoneTransformHandles.Dispose();
             m_SpringBoneProperties.Dispose();
             m_springBoneComponents.Dispose();
@@ -241,15 +253,7 @@ namespace Unity.Animations.SpringBones.Jobs
             m_Graph = InitializeGraph();
             m_Graph.Play();
         }
-
-//        void LateUpdate()
-//        {
-//            if (!m_Graph.IsValid())
-//            {
-//                return;
-//            }
-//        }
-
+        
         void OnDisable()
         {
             if (!m_Graph.IsValid())
@@ -259,7 +263,25 @@ namespace Unity.Animations.SpringBones.Jobs
 
             FinalizeGraph();
         }
-        
+
+        private void LateUpdate()
+        {
+            var jobData = m_SpringBonePlayable.GetJobData<SpringBoneJob>();
+
+            jobData.isPaused = isPaused;
+            jobData.simulationFrameRate = simulationFrameRate;
+            jobData.dynamicRatio = dynamicRatio;
+            jobData.gravity = gravity;
+            jobData.bounce = bounce;
+            jobData.friction = friction;
+            jobData.enableAngleLimits = enableAngleLimits;
+            jobData.enableCollision = enableCollision;
+            jobData.enableLengthLimits = enableLengthLimits;
+            jobData.collideWithGround = collideWithGround;
+            jobData.groundHeight = groundHeight;
+            
+            m_SpringBonePlayable.SetJobData(jobData);
+        }
 
 //        private void Start()
 //        {
