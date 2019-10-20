@@ -1,14 +1,16 @@
 {
     "name": "com.unity.animations.springbone.editor",
     "references": [
-        "com.unity.animations.springbone"
+        "com.unity.animations.springbone",
+        "Unity.Burst.Editor",
+        "Unity.Mathematics.Editor"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": []
 }
