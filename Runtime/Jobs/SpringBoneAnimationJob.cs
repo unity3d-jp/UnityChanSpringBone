@@ -1,5 +1,4 @@
 using Unity.Collections;
-using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.Animations;
 
@@ -22,7 +21,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public float radius;
         public float springLength;
         public Vector3 boneAxis;
-        public bool isRootTransform;
+        public SpringCollisionLayerMask layer;
     }
 
     [System.Serializable]
@@ -36,24 +35,43 @@ namespace Unity.Animations.SpringBones.Jobs
         public Vector3 previousTipPosition;
     }
     
+    [System.Serializable]
+    public struct SpringColliderTransform
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+        public Matrix4x4 worldToLocalMatrix;
+        public Matrix4x4 localToWorldMatrix;
+    }
+
     public struct SpringBoneJob : IAnimationJob
     {
         public TransformStreamHandle rootHandle;
         public NativeArray<TransformStreamHandle> springBoneParentTransformHandles;
         public NativeArray<TransformStreamHandle> springBoneTransformHandles;
-        public NativeArray<SpringBoneProperties> springBoneProperties; //read only
+        [ReadOnly]
+        public NativeArray<SpringBoneProperties> springBoneProperties;
         public NativeArray<SpringBoneComponent> springBoneComponents;
+
+        public NativeArray<TransformStreamHandle> springColliderTransformHandles;
+        [ReadOnly]
+        public NativeArray<SpringColliderComponent> colliders;
+        public NativeArray<SpringColliderTransform> colliderTransforms;
 
         public bool isPaused;
         public int simulationFrameRate;
         public float dynamicRatio;
-        public Vector3 gravity;
-        public float bounce;
-        public float friction;
+
         public bool enableAngleLimits;
         public bool enableCollision;
         public bool enableLengthLimits;
         public bool collideWithGround;
+
+        public Vector3 gravity;
+        public float bounce;
+        public float friction;
         public float groundHeight;
 
         private struct TransformQueryCache
@@ -65,7 +83,7 @@ namespace Unity.Animations.SpringBones.Jobs
             public Vector3 position;
             public Quaternion rotation;
             public Quaternion localRotation;
-            public Matrix4x4 localToGlobalMat;
+            public Matrix4x4 localToWorldMatrix;
         }
         
         /// <summary>
@@ -92,7 +110,22 @@ namespace Unity.Animations.SpringBones.Jobs
             if (springBoneTransformHandles.Length < 2)
                 return;
 
+            UpdateColliderTransforms(stream);
             UpdateDynamics(stream);
+        }
+
+        private void UpdateColliderTransforms(AnimationStream stream)
+        {
+            for (var i = 0; i < colliders.Length; ++i)
+            {
+                var ct = colliderTransforms[i];
+                springColliderTransformHandles[i].GetGlobalTR(stream, out ct.position, out ct.rotation);
+
+                colliderTransforms[i] = new SpringColliderTransform
+                {
+                    //TODO
+                };
+            }
         }
         
         private void UpdateDynamics(AnimationStream stream)
@@ -113,13 +146,13 @@ namespace Unity.Animations.SpringBones.Jobs
                     position = pos,
                     rotation = rot,
                     localRotation = springBoneTransformHandles[index].GetLocalRotation(stream),
-                    localToGlobalMat = Matrix4x4.TRS(pos, rot, Vector3.one)
+                    localToWorldMatrix = Matrix4x4.TRS(pos, rot, Vector3.one)
                 };
 
                 if (!isPaused)
                 {
                     UpdateSpring(ref bone, index, deltaTime, in prop, in tc);
-                    SatisfyConstraintsAndComputeRotation(ref bone, index, deltaTime, in prop, in tc);
+                    ResolveCollisionsAndConstraints(ref bone, index, deltaTime, in prop, in tc);
                 }
 
                 UpdateRotation(ref bone, index, in prop, in tc);
@@ -129,14 +162,16 @@ namespace Unity.Animations.SpringBones.Jobs
             }
         }
 
-        private void UpdateSpring(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
+        private static void UpdateSpring(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             
             bone.skinAnimationLocalRotation = tc.localRotation;
 
             var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
+            var baseWorldAxis = baseWorldRotation * prop.boneAxis;
 
-            var orientedInitialPosition = tc.position + baseWorldRotation * prop.boneAxis * prop.springLength;
+            var orientedInitialPosition = tc.position + 
+                                          baseWorldAxis * prop.springLength;
 
             // Hooke's law: force to push us to equilibrium
             var force = prop.stiffnessForce * (orientedInitialPosition - bone.currentTipPosition);
@@ -159,7 +194,7 @@ namespace Unity.Animations.SpringBones.Jobs
             {
                 // was originally this
                 //headToTail = transform.TransformDirection(boneAxis)
-                headToTail = tc.localToGlobalMat * headToTail;
+                headToTail = tc.localToWorldMatrix * headToTail;
             }
             else
             {
@@ -169,25 +204,25 @@ namespace Unity.Animations.SpringBones.Jobs
             bone.currentTipPosition = headPosition + prop.springLength * headToTail;
         }
 
-        private void SatisfyConstraintsAndComputeRotation(ref SpringBoneComponent bone, int index, float deltaTime,
+        private void ResolveCollisionsAndConstraints(ref SpringBoneComponent bone, int index, float deltaTime,
             in SpringBoneProperties prop, in TransformQueryCache tc)
         {
 //            if (enableLengthLimits)
 //            {
-//                currTipPos = ApplyLengthLimits(deltaTime);
+//                bone.currentTipPosition = ApplyLengthLimits(ref bone, index, in prop, in tc, deltaTime);
 //            }
 
-//            var hadCollision = false;
+            var hadCollision = false;
 
-//            if (collideWithGround)
-//            {
-//                hadCollision = CheckForGroundCollision();
-//            }
+            if (collideWithGround)
+            {
+                hadCollision = ResolveGroundCollision(ref bone, index, in prop, in tc);
+            }
 
-//            if (enableCollision & !hadCollision)
-//            {
-//                hadCollision = CheckForCollision();
-//            }
+            if (enableCollision & !hadCollision)
+            {
+                hadCollision = ResolveCollisions(ref bone, index, in prop, in tc);
+            }
 
             if (enableAngleLimits)
             {
@@ -201,10 +236,9 @@ namespace Unity.Animations.SpringBones.Jobs
                 | float.IsNaN(bone.currentTipPosition.y)
                 | float.IsNaN(bone.currentTipPosition.z))
             {
-//                var parentRotation = rootHandle.GetRotation(stream);
-//                var position = springBoneTransformHandles[index].GetPosition(stream);
                 var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
-                bone.currentTipPosition = tc.position + baseWorldRotation * prop.boneAxis * prop.springLength;
+                var baseWorldAxis = baseWorldRotation * prop.boneAxis;
+                bone.currentTipPosition = tc.position + baseWorldAxis * prop.springLength;
                 bone.previousTipPosition = bone.currentTipPosition;
             }
 
@@ -212,7 +246,7 @@ namespace Unity.Animations.SpringBones.Jobs
             bone.currentLocoalRotation = Quaternion.Lerp(bone.skinAnimationLocalRotation, bone.actualLocalRotation, dynamicRatio);
         }
 
-        private Quaternion ComputeLocalRotation(ref SpringBoneComponent bone, int index, Vector3 tipPosition, in SpringBoneProperties prop, in TransformQueryCache tc)
+        private static Quaternion ComputeLocalRotation(ref SpringBoneComponent bone, int index, Vector3 tipPosition, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             var baseWorldRotation = tc.parentRotation * bone.initialLocalRotation;
             var worldBoneVector = tipPosition - tc.position;
@@ -225,7 +259,7 @@ namespace Unity.Animations.SpringBones.Jobs
             return outputRotation;
         }
         
-        private void ApplyAngleLimits(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
+        private static void ApplyAngleLimits(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
         {
             if (!prop.yAngleLimits.active && !prop.zAngleLimits.active)
             {
@@ -239,17 +273,174 @@ namespace Unity.Animations.SpringBones.Jobs
 
             if (prop.yAngleLimits.active)
             {
-                prop.yAngleLimits.ConstrainVector(
-                    tc.parentLocalToGlobalMat * -Vector3.up, tc.parentLocalToGlobalMat * -Vector3.forward, forward, prop.angularStiffness, deltaTime, ref vector);
+                vector = prop.yAngleLimits.ConstrainVector(
+                    vector,
+                    tc.parentLocalToGlobalMat * -Vector3.up, 
+                    tc.parentLocalToGlobalMat * -Vector3.forward, forward, prop.angularStiffness, deltaTime);
             }
 
             if (prop.zAngleLimits.active)
             {
-                prop.zAngleLimits.ConstrainVector(
-                    tc.parentLocalToGlobalMat * -Vector3.forward, tc.parentLocalToGlobalMat * -Vector3.up, forward, prop.angularStiffness, deltaTime, ref vector);
+                vector = prop.zAngleLimits.ConstrainVector(
+                    vector,
+                    tc.parentLocalToGlobalMat * -Vector3.forward, 
+                    tc.parentLocalToGlobalMat * -Vector3.up, forward, prop.angularStiffness, deltaTime);
             }
 
             bone.currentTipPosition = origin + vector;
         }
+        
+        // 
+        // Collisions
+        //
+        
+//        private Vector3 ApplyLengthLimits(ref SpringBoneComponent bone, int index, in SpringBoneProperties prop, in TransformQueryCache tc, float deltaTime)
+//        {
+//            var targetCount = lengthLimitTargets.Length;
+//            if (targetCount == 0)
+//            {
+//                return currTipPos;
+//            }
+//
+//            const float SpringConstant = 0.5f;
+//            var accelerationMultiplier = SpringConstant * deltaTime * deltaTime;
+//            var movement = new Vector3(0f, 0f, 0f);
+//            for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+//            {
+//                var targetPosition = lengthLimitTargets[targetIndex].position;
+//                var lengthToLimitTarget = lengthsToLimitTargets[targetIndex];
+//                var currentToTarget = currTipPos - targetPosition;
+//                var currentDistanceSquared = currentToTarget.sqrMagnitude;
+//
+//                // Hooke's Law
+//                var currentDistance = Mathf.Sqrt(currentDistanceSquared);
+//                var distanceFromEquilibrium = currentDistance - lengthToLimitTarget;
+//                movement -= accelerationMultiplier * distanceFromEquilibrium * currentToTarget.normalized;
+//            }
+//
+//            return currTipPos + movement;
+//        }
+        
+        private bool ResolveCollisions(ref SpringBoneComponent bone, int index, in SpringBoneProperties prop, in TransformQueryCache tc)
+        {
+            var desiredPosition = bone.currentTipPosition;
+            var headPosition = tc.position;
+            
+//            var scaledRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            // var scaleMagnitude = new Vector3(prop.radius, 0f, 0f).magnitude;
+            var hitNormal = new Vector3(0f, 0f, 1f);
+
+            var hadCollision = false;
+
+            for (var i = 0; i < colliders.Length; ++i)
+            {
+                var collider = colliders[i];
+                var colliderTransform = colliderTransforms[i];
+
+                if ((collider.layer & prop.layer) == 0)
+                {
+                    continue;
+                }
+                
+                switch (collider.type)
+                {
+                    case ColliderType.Capsule:
+                        hadCollision |= SpringCollisionResolver.ResolveCapsule(
+                            collider, colliderTransform,
+                            headPosition, ref bone.currentTipPosition, ref hitNormal, 
+                            prop.radius);
+                        break;
+                    case ColliderType.Sphere:
+                        hadCollision |= SpringCollisionResolver.ResolveSphere(
+                            collider, colliderTransform,
+                            headPosition, ref bone.currentTipPosition, ref hitNormal, prop.radius);
+                        break;
+                    case ColliderType.Panel:
+                        hadCollision |= SpringCollisionResolver.ResolvePanel(
+                            collider, colliderTransform,
+                            headPosition, ref bone.currentTipPosition, ref hitNormal, prop.springLength, 
+                            prop.radius);
+                        break;
+                }
+            }
+
+            if (hadCollision)
+            {
+                var incidentVector = desiredPosition - bone.previousTipPosition;
+                var reflectedVector = Vector3.Reflect(incidentVector, hitNormal);
+
+                // friction
+                var upwardComponent = Vector3.Dot(reflectedVector, hitNormal) * hitNormal;
+                var lateralComponent = reflectedVector - upwardComponent;
+
+                var bounceVelocity = bounce * upwardComponent + (1f - friction) * lateralComponent;
+                const float BounceThreshold = 0.0001f;
+                if (bounceVelocity.sqrMagnitude > BounceThreshold)
+                {
+                    var distanceTraveled = (bone.currentTipPosition - bone.previousTipPosition).magnitude;
+                    bone.previousTipPosition = bone.currentTipPosition - bounceVelocity;
+                    bone.currentTipPosition += Mathf.Max(0f, bounceVelocity.magnitude - distanceTraveled) * bounceVelocity.normalized;
+                }
+                else
+                {
+                    bone.previousTipPosition = bone.currentTipPosition;
+                }
+            }
+            return hadCollision;
+        }
+
+        private bool ResolveGroundCollision(ref SpringBoneComponent bone, int index, in SpringBoneProperties prop, in TransformQueryCache tc)
+        {
+            // Todo: this assumes a flat ground parallel to the xz plane
+            var worldHeadPosition = tc.position;
+            var worldTailPosition = bone.currentTipPosition;
+//            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldLength = (bone.currentTipPosition - worldHeadPosition).magnitude;
+            worldHeadPosition.y -= groundHeight;
+            worldTailPosition.y -= groundHeight;
+
+            var collidingWithGround = SpringCollisionResolver.ResolvePanelOnAxis(
+                worldHeadPosition,
+                ref worldTailPosition, 
+                worldLength, prop.radius, SpringCollisionResolver.Axis.Y);
+
+            if (collidingWithGround)
+            {
+                worldTailPosition.y += groundHeight;
+                bone.currentTipPosition = FixBoneLength(
+                    in tc,
+                    in prop,
+                    tc.position,
+                    worldTailPosition, 0.5f * prop.springLength, prop.springLength);
+                // Todo: bounce, friction
+                bone.previousTipPosition = bone.currentTipPosition;
+            }
+
+            return collidingWithGround;
+        }
+
+        private static Vector3 FixBoneLength(in TransformQueryCache tc, in SpringBoneProperties prop, 
+            Vector3 headPosition, Vector3 tailPosition, float minLength, float maxLength) 
+        {
+            var headToTail = tailPosition - headPosition;
+            var magnitude = headToTail.magnitude;
+            const float MagnitudeThreshold = 0.001f;
+            if (magnitude <= MagnitudeThreshold)
+            {
+                var AxisVector = tc.localToWorldMatrix * prop.boneAxis * minLength;
+                
+//                return headPosition + transform.TransformDirection(boneAxis) * minLength;
+                return new Vector3
+                {
+                    x = headPosition.x + AxisVector.x,
+                    y = headPosition.y + AxisVector.y,
+                    z = headPosition.z + AxisVector.z
+                };
+            }
+
+            var newMagnitude = (magnitude < minLength) ? minLength : magnitude;
+            newMagnitude = (newMagnitude > maxLength) ? maxLength : newMagnitude;
+            return headPosition + (newMagnitude / magnitude) * headToTail;
+        }        
     }
 }

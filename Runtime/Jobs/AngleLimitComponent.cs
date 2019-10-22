@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Diagnostics.Contracts;
+using UnityEngine;
 
 namespace Unity.Animations.SpringBones.Jobs
 {
@@ -20,18 +21,19 @@ namespace Unity.Animations.SpringBones.Jobs
         }
 
         // Returns true if exceeded bounds
-        public void ConstrainVector
+        [Pure]
+        public Vector3 ConstrainVector
         (
+            Vector3 target,
             Vector3 basisSide,
             Vector3 basisUp,
             Vector3 basisForward,
             float springStrength,
-            float deltaTime,
-            ref Vector3 vector
+            float deltaTime
         )
         {
-            var upProjection = Vector3.Project(vector, basisUp);
-            var projection = vector - upProjection;
+            var upProjection = Vector3.Project(target, basisUp);
+            var projection = target - upProjection;
             var projectionMagnitude = projection.magnitude;
             var originalSine = Vector3.Dot(projection / projectionMagnitude, basisSide);
             // The above math might have a bit of floating point error 
@@ -56,7 +58,8 @@ namespace Unity.Animations.SpringBones.Jobs
             var radians = Mathf.Deg2Rad * newAngle;
             var newProjection = Mathf.Sin(radians) * basisSide + Mathf.Cos(radians) * basisForward;
             newProjection *= projectionMagnitude;
-            vector = newProjection + upProjection;
+            
+            return newProjection + upProjection;
         }
     }
 }
