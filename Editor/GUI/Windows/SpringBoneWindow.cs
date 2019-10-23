@@ -6,7 +6,7 @@ namespace Unity.Animations.SpringBones
 {
     public class SpringBoneWindow : EditorWindow
     {
-        [MenuItem("UTJ/スプリングボーン窓")]
+        [MenuItem("Window/Animation/Spring Bone/SpringBone Editor")]
         public static void ShowWindow()
         {
             var window = GetWindow<SpringBoneWindow>("スプリングボーン");

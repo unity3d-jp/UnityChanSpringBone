@@ -6,7 +6,7 @@ namespace Unity.Animations.SpringBones
 {
     public class SetObjectParentWindow : EditorWindow
     {
-        [MenuItem("UTJ/親子付け")]
+        [MenuItem("Window/Animation/Spring Bone/Hierarchy Editor")]
         public static void ShowWindow()
         {
             GetWindow<SetObjectParentWindow>("親子付け");

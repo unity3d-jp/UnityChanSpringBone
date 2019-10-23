@@ -337,6 +337,7 @@ namespace Unity.Animations.SpringBones.Jobs
                 var collider = colliders[i];
                 var colliderTransform = colliderTransforms[i];
 
+                // comment out for testing
                 if ((collider.layer & prop.layer) == 0)
                 {
                     continue;

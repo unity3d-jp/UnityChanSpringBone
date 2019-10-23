@@ -8,7 +8,7 @@ namespace Unity.Animations.SpringBones
 {
     public class FindGameObjectsWindow : EditorWindow
     {
-        [MenuItem("UTJ/名前で選択窓")]
+        [MenuItem("Window/Animation/Spring Bone/Select by Name")]
         public static void ShowWindow()
         {
             var window = GetWindow<FindGameObjectsWindow>("名前で選択");
