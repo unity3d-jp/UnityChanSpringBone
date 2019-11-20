@@ -38,6 +38,8 @@ namespace Unity.Animations.SpringBones
         private float spinTime;
         private Vector3 offsetVector;
 
+        public Vector3 OffsetVector => offsetVector;
+
         private float GetPositionalFactor(float x, float y)
         {
             return Mathf.Sin(positionalMultiplier * x) + Mathf.Cos(positionalMultiplier * y);

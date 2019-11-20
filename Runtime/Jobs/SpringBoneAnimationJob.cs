@@ -30,7 +30,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public Quaternion skinAnimationLocalRotation;
         public Quaternion initialLocalRotation;
         public Quaternion actualLocalRotation;
-        public Quaternion currentLocoalRotation;
+        public Quaternion currentLocalRotation;
         public Vector3 currentTipPosition;
         public Vector3 previousTipPosition;
     }
@@ -40,8 +40,6 @@ namespace Unity.Animations.SpringBones.Jobs
     {
         public Vector3 position;
         public Quaternion rotation;
-        public Quaternion localRotation;
-        public Vector3 localScale;
         public Matrix4x4 worldToLocalMatrix;
         public Matrix4x4 localToWorldMatrix;
     }
@@ -60,6 +58,9 @@ namespace Unity.Animations.SpringBones.Jobs
         public NativeArray<SpringColliderComponent> colliders;
         public NativeArray<SpringColliderTransform> colliderTransforms;
 
+        [ReadOnly] 
+        public NativeArray<SpringBoneForceComponent> forces;
+        
         public bool isPaused;
         public int simulationFrameRate;
         public float dynamicRatio;
@@ -68,6 +69,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public bool enableCollision;
         public bool enableLengthLimits;
         public bool collideWithGround;
+        public int forceCount;
 
         public Vector3 gravity;
         public float bounce;
@@ -118,12 +120,14 @@ namespace Unity.Animations.SpringBones.Jobs
         {
             for (var i = 0; i < colliders.Length; ++i)
             {
-                var ct = colliderTransforms[i];
-                springColliderTransformHandles[i].GetGlobalTR(stream, out ct.position, out ct.rotation);
-
+                springColliderTransformHandles[i].GetGlobalTR(stream, out var position, out var rotation);
+                
                 colliderTransforms[i] = new SpringColliderTransform
                 {
-                    //TODO
+                    position = position,
+                    rotation = rotation,
+                    localToWorldMatrix = Matrix4x4.TRS(position,rotation,Vector3.one),
+                    worldToLocalMatrix = Matrix4x4.TRS(position,rotation,Vector3.one).inverse
                 };
             }
         }
@@ -151,18 +155,19 @@ namespace Unity.Animations.SpringBones.Jobs
 
                 if (!isPaused)
                 {
-                    UpdateSpring(ref bone, index, deltaTime, in prop, in tc);
+                    var force = GetTotalForceOnBone(in prop, in tc);
+                    UpdateSpring(ref bone, index, deltaTime, in prop, in tc, force);
                     ResolveCollisionsAndConstraints(ref bone, index, deltaTime, in prop, in tc);
                 }
 
                 UpdateRotation(ref bone, index, in prop, in tc);
 
-                springBoneTransformHandles[index].SetLocalRotation(stream, bone.currentLocoalRotation);
+                springBoneTransformHandles[index].SetLocalRotation(stream, bone.currentLocalRotation);
                 springBoneComponents[index] = bone;
             }
         }
-
-        private static void UpdateSpring(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc)
+        
+        private static void UpdateSpring(ref SpringBoneComponent bone, int index, float deltaTime, in SpringBoneProperties prop, in TransformQueryCache tc, Vector3 externalForce)
         {
             
             bone.skinAnimationLocalRotation = tc.localRotation;
@@ -175,7 +180,7 @@ namespace Unity.Animations.SpringBones.Jobs
 
             // Hooke's law: force to push us to equilibrium
             var force = prop.stiffnessForce * (orientedInitialPosition - bone.currentTipPosition);
-            force += prop.springForce;
+            force += prop.springForce + externalForce;
             var sqrDt = deltaTime * deltaTime;
             force *= 0.5f * sqrDt;
 
@@ -243,7 +248,7 @@ namespace Unity.Animations.SpringBones.Jobs
             }
 
             bone.actualLocalRotation = ComputeLocalRotation(ref bone, index, bone.currentTipPosition, in prop, in tc);
-            bone.currentLocoalRotation = Quaternion.Lerp(bone.skinAnimationLocalRotation, bone.actualLocalRotation, dynamicRatio);
+            bone.currentLocalRotation = Quaternion.Lerp(bone.skinAnimationLocalRotation, bone.actualLocalRotation, dynamicRatio);
         }
 
         private static Quaternion ComputeLocalRotation(ref SpringBoneComponent bone, int index, Vector3 tipPosition, in SpringBoneProperties prop, in TransformQueryCache tc)
@@ -338,10 +343,10 @@ namespace Unity.Animations.SpringBones.Jobs
                 var colliderTransform = colliderTransforms[i];
 
                 // comment out for testing
-                if ((collider.layer & prop.layer) == 0)
-                {
-                    continue;
-                }
+//                if ((collider.layer & prop.layer) == 0)
+//                {
+//                    continue;
+//                }
                 
                 switch (collider.type)
                 {
@@ -442,6 +447,51 @@ namespace Unity.Animations.SpringBones.Jobs
             var newMagnitude = (magnitude < minLength) ? minLength : magnitude;
             newMagnitude = (newMagnitude > maxLength) ? maxLength : newMagnitude;
             return headPosition + (newMagnitude / magnitude) * headToTail;
-        }        
+        }
+        
+
+        private Vector3 GetTotalForceOnBone(in SpringBoneProperties prop, in TransformQueryCache tc)
+        {
+            var sumOfForces = gravity;
+            for (var i = 0; i < forceCount; i++)
+            {
+                var force = forces[i];
+                sumOfForces += ComputeForceOnBone(in force, in prop, in tc);
+            }
+
+            return sumOfForces;
+        }
+        
+        // ForceVolume
+        private static Vector3 ComputeForceOnBone(in SpringBoneForceComponent force, in SpringBoneProperties prop, in TransformQueryCache tc)
+        {
+            //Directional
+            if (force.type == SpringBoneForceType.Directional)
+            {
+                return tc.localToWorldMatrix * new Vector4(0f, 0f, force.strength, 0f);
+            }
+
+            //Wind
+            var fullWeight = force.weight * force.strength;
+            if ((fullWeight <= 0.0001f) | (force.periodInSecond <= 0.001f))
+            {
+                return Vector3.zero;
+            }
+            
+            const float PI2 = Mathf.PI * 2f;
+
+            var factor = force.timeInSecond / force.periodInSecond * PI2;
+            var worldToLocalMatrix = force.localToWorldMatrix.inverse;
+
+            // Wind
+            var boneLocalPositionInWindWorld = worldToLocalMatrix * tc.position;
+            var positionalMultiplier = PI2 / force.peakDistance;
+            var positionalFactor =  Mathf.Sin(positionalMultiplier * boneLocalPositionInWindWorld.x) + Mathf.Cos(positionalMultiplier * boneLocalPositionInWindWorld.z);
+            var offsetMultiplier = Mathf.Sin(factor + positionalFactor);
+
+            var forceAtPosition = fullWeight * ((Vector3)(force.localToWorldMatrix * Vector3.forward) + offsetMultiplier * force.offsetVector).normalized;
+            
+            return prop.windInfluence * forceAtPosition;
+        }
     }
 }

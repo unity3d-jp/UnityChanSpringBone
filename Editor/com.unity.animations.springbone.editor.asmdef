@@ -5,7 +5,9 @@
         "Unity.Burst.Editor",
         "Unity.Mathematics.Editor"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

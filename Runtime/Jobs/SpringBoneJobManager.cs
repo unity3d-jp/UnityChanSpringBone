@@ -104,6 +104,8 @@ namespace Unity.Animations.SpringBones.Jobs
                 springBoneProperties = m_SpringBoneProperties,
                 springBoneComponents = m_springBoneComponents,
                 springColliderTransformHandles = m_springColliderTransformHandles,
+                forces = SpringBoneForceManager.GetManager().Forces,
+                forceCount = SpringBoneForceManager.GetManager().ActiveForceCount,
                 colliders = m_colliders,
                 colliderTransforms = m_colliderTransforms,
                 isPaused = isPaused,
@@ -321,7 +323,9 @@ namespace Unity.Animations.SpringBones.Jobs
             jobData.enableLengthLimits = enableLengthLimits;
             jobData.collideWithGround = collideWithGround;
             jobData.groundHeight = groundHeight;
-            
+            jobData.forces = SpringBoneForceManager.GetManager().Forces;
+            jobData.forceCount = SpringBoneForceManager.GetManager().ActiveForceCount;
+
             m_SpringBonePlayable.SetJobData(jobData);
         }
     }
