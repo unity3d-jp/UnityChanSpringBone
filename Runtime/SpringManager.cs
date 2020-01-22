@@ -184,132 +184,132 @@ namespace Unity.Animations.SpringBones
             if (automaticUpdates) { UpdateDynamics(); }
         }
 
-#if UNITY_EDITOR
-        private Vector3[] groundPoints;
-
-        private void OnDrawGizmos()
-        {
-            if (collideWithGround)
-            {
-                if (groundPoints == null)
-                {
-                    groundPoints = new Vector3[] {
-                        new Vector3(-1f, 0f, -1f),
-                        new Vector3( 1f, 0f, -1f),
-                        new Vector3( 1f, 0f,  1f),
-                        new Vector3(-1f, 0f,  1f)
-                    };
-                }
-
-                var characterPosition = transform.position;
-                var groundOrigin = new Vector3(characterPosition.x, groundHeight, characterPosition.z);
-                var pointCount = groundPoints.Length;
-                Gizmos.color = Color.yellow;
-                for (int pointIndex = 0; pointIndex < pointCount; pointIndex++)
-                {
-                    var endPointIndex = (pointIndex + 1) % pointCount;
-                    Gizmos.DrawLine(
-                        groundOrigin + groundPoints[pointIndex],
-                        groundOrigin + groundPoints[endPointIndex]);
-                }
-            }
-
-            DrawBones();
-        }
-
-        private List<SpringBone> selectedBones;
-        private Vector3[] boneLines;
-
-        private void DrawBones()
-        {
-            // Draw each item by color to reduce Material.SetPass calls
-            var boneCount = springBones.Length;
-            IList<SpringBone> bonesToDraw = springBones;
-            if (onlyShowSelectedBones)
-            {
-                if (selectedBones == null) { selectedBones = new List<SpringBone>(boneCount); }
-                selectedBones.Clear();
-                var selection = UnityEditor.Selection.gameObjects;
-                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-                {
-                    var bone = springBones[boneIndex];
-                    var pivot = (bone.pivotNode != null) ? bone.pivotNode.gameObject : null;
-                    if (selection.Contains(bone.gameObject) || selection.Contains(pivot))
-                    {
-                        selectedBones.Add(springBones[boneIndex]);
-                    }
-                }
-                bonesToDraw = selectedBones;
-                boneCount = bonesToDraw.Count;
-            }
-
-            UnityEditor.Handles.color = new Color(0.2f, 1f, 0.2f);
-            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-            {
-                var bone = bonesToDraw[boneIndex];
-                bone.DrawAngleLimits(bone.yAngleLimits, angleLimitDrawScale);
-            }
-
-            UnityEditor.Handles.color = new Color(0.7f, 0.7f, 1f);
-            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-            {
-                var bone = bonesToDraw[boneIndex];
-                bone.DrawAngleLimits(bone.zAngleLimits, angleLimitDrawScale);
-            }
-
-            var linePointCount = boneCount * 2;
-            if (boneLines == null || boneLines.Length != linePointCount)
-            {
-                boneLines = new Vector3[linePointCount];
-            }
-
-            var pointIndex = 0;
-            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-            {
-                var bone = bonesToDraw[boneIndex];
-                var origin = bone.transform.position;
-                var pivotForward = -bone.GetPivotTransform().right;
-                boneLines[pointIndex] = origin;
-                boneLines[pointIndex + 1] = origin + angleLimitDrawScale * pivotForward;
-                pointIndex += 2;
-            }
-            UnityEditor.Handles.color = Color.gray;
-            UnityEditor.Handles.DrawLines(boneLines);
-
-            pointIndex = 0;
-            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-            {
-                var bone = bonesToDraw[boneIndex];
-                boneLines[pointIndex] = bone.transform.position;
-                boneLines[pointIndex + 1] = bone.ComputeChildPosition();
-                pointIndex += 2;
-            }
-            UnityEditor.Handles.color = boneColor;
-            UnityEditor.Handles.DrawLines(boneLines);
-
-            if (showBoneSpheres)
-            {
-                Gizmos.color = new Color(0f, 0f, 0f, 0f);
-                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-                {
-                    bonesToDraw[boneIndex].DrawSpringBoneCollision();
-                }
-            }
-
-            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-            {
-                bonesToDraw[boneIndex].MarkCollidersForDrawing();
-            }
-
-            if (showBoneNames)
-            {
-                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
-                {
-                    var bone = bonesToDraw[boneIndex];
-                    UnityEditor.Handles.Label(bone.transform.position, bone.name);
-                }
-            }
-        }
-#endif
+//#if UNITY_EDITOR
+//        private Vector3[] groundPoints;
+//
+//        private void OnDrawGizmos()
+//        {
+//            if (collideWithGround)
+//            {
+//                if (groundPoints == null)
+//                {
+//                    groundPoints = new Vector3[] {
+//                        new Vector3(-1f, 0f, -1f),
+//                        new Vector3( 1f, 0f, -1f),
+//                        new Vector3( 1f, 0f,  1f),
+//                        new Vector3(-1f, 0f,  1f)
+//                    };
+//                }
+//
+//                var characterPosition = transform.position;
+//                var groundOrigin = new Vector3(characterPosition.x, groundHeight, characterPosition.z);
+//                var pointCount = groundPoints.Length;
+//                Gizmos.color = Color.yellow;
+//                for (int pointIndex = 0; pointIndex < pointCount; pointIndex++)
+//                {
+//                    var endPointIndex = (pointIndex + 1) % pointCount;
+//                    Gizmos.DrawLine(
+//                        groundOrigin + groundPoints[pointIndex],
+//                        groundOrigin + groundPoints[endPointIndex]);
+//                }
+//            }
+//
+//            DrawBones();
+//        }
+//
+//        private List<SpringBone> selectedBones;
+//        private Vector3[] boneLines;
+//
+//        private void DrawBones()
+//        {
+//            // Draw each item by color to reduce Material.SetPass calls
+//            var boneCount = springBones.Length;
+//            IList<SpringBone> bonesToDraw = springBones;
+//            if (onlyShowSelectedBones)
+//            {
+//                if (selectedBones == null) { selectedBones = new List<SpringBone>(boneCount); }
+//                selectedBones.Clear();
+//                var selection = UnityEditor.Selection.gameObjects;
+//                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//                {
+//                    var bone = springBones[boneIndex];
+//                    var pivot = (bone.pivotNode != null) ? bone.pivotNode.gameObject : null;
+//                    if (selection.Contains(bone.gameObject) || selection.Contains(pivot))
+//                    {
+//                        selectedBones.Add(springBones[boneIndex]);
+//                    }
+//                }
+//                bonesToDraw = selectedBones;
+//                boneCount = bonesToDraw.Count;
+//            }
+//
+//            UnityEditor.Handles.color = new Color(0.2f, 1f, 0.2f);
+//            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//            {
+//                var bone = bonesToDraw[boneIndex];
+//                bone.DrawAngleLimits(bone.yAngleLimits, angleLimitDrawScale);
+//            }
+//
+//            UnityEditor.Handles.color = new Color(0.7f, 0.7f, 1f);
+//            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//            {
+//                var bone = bonesToDraw[boneIndex];
+//                bone.DrawAngleLimits(bone.zAngleLimits, angleLimitDrawScale);
+//            }
+//
+//            var linePointCount = boneCount * 2;
+//            if (boneLines == null || boneLines.Length != linePointCount)
+//            {
+//                boneLines = new Vector3[linePointCount];
+//            }
+//
+//            var pointIndex = 0;
+//            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//            {
+//                var bone = bonesToDraw[boneIndex];
+//                var origin = bone.transform.position;
+//                var pivotForward = -bone.GetPivotTransform().right;
+//                boneLines[pointIndex] = origin;
+//                boneLines[pointIndex + 1] = origin + angleLimitDrawScale * pivotForward;
+//                pointIndex += 2;
+//            }
+//            UnityEditor.Handles.color = Color.gray;
+//            UnityEditor.Handles.DrawLines(boneLines);
+//
+//            pointIndex = 0;
+//            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//            {
+//                var bone = bonesToDraw[boneIndex];
+//                boneLines[pointIndex] = bone.transform.position;
+//                boneLines[pointIndex + 1] = bone.ComputeChildPosition();
+//                pointIndex += 2;
+//            }
+//            UnityEditor.Handles.color = boneColor;
+//            UnityEditor.Handles.DrawLines(boneLines);
+//
+//            if (showBoneSpheres)
+//            {
+//                Gizmos.color = new Color(0f, 0f, 0f, 0f);
+//                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//                {
+//                    bonesToDraw[boneIndex].DrawSpringBoneCollision();
+//                }
+//            }
+//
+//            for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//            {
+//                bonesToDraw[boneIndex].MarkCollidersForDrawing();
+//            }
+//
+//            if (showBoneNames)
+//            {
+//                for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+//                {
+//                    var bone = bonesToDraw[boneIndex];
+//                    UnityEditor.Handles.Label(bone.transform.position, bone.name);
+//                }
+//            }
+//        }
+//#endif
     }
 }

@@ -15,6 +15,13 @@ namespace Unity.Animations.SpringBones.Jobs
 {
     public class SpringBoneJobManager : MonoBehaviour
     {
+        [Header("Debug")] 
+        public bool allowInspectorEdit = false;
+
+        [Header("Animator")] 
+        [Range(0f, 1f)] public float animatorBlendWeight = 1f;
+        public bool blendAdditive;
+        
         [Header("Properties")] 
         public bool isPaused = false;
         public int simulationFrameRate = 60;
@@ -22,7 +29,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public Vector3 gravity = new Vector3(0f, -10f, 0f);
         [Range(0f, 1f)] public float bounce = 0f;
         [Range(0f, 1f)] public float friction = 1f;
-
+        
         [Header("Constraints")] 
         public bool enableAngleLimits = true;
         public bool enableCollision = true;
@@ -42,60 +49,19 @@ namespace Unity.Animations.SpringBones.Jobs
         private NativeArray<SpringColliderComponent> m_colliders; //read only
         private NativeArray<SpringColliderTransform> m_colliderTransforms;
 
+        private SpringCollider[] m_colliderObjects;
+        private SpringBone[] m_springBoneObjects;
+
+        private AnimationLayerMixerPlayable m_layerMixer;
+        
         private PlayableGraph InitializeGraph()
         {
-            var springBones = FindSpringBones(true);
+            m_springBoneObjects = FindSpringBones(true);
             var animator = GetComponent<Animator>();
-
-            var nSpringBones = springBones.Length;
-            m_springBoneParentTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-
-            m_springBoneTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-
-            m_SpringBoneProperties = new NativeArray<SpringBoneProperties>(nSpringBones, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
             
-            m_springBoneComponents = new NativeArray<SpringBoneComponent>(nSpringBones, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-            
-            for (var i = 0; i < nSpringBones; ++i)
-            {
-                m_springBoneTransformHandles[i] = animator.BindStreamTransform(springBones[i].transform);
-                m_springBoneParentTransformHandles[i] = animator.BindStreamTransform(springBones[i].transform.parent);
-            }
+            InitializeSpringBones(animator);
+            InitializeColliders(animator);
 
-            var springColliders = FindSpringColliders();
-            var nColliders = springColliders.Length;
-            
-            m_springColliderTransformHandles = new NativeArray<TransformStreamHandle>(nColliders, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-            
-            m_colliders = new NativeArray<SpringColliderComponent>(nColliders, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-
-            m_colliderTransforms = new NativeArray<SpringColliderTransform>(nColliders, Allocator.Persistent,
-                NativeArrayOptions.UninitializedMemory);
-
-            for (var i = 0; i < nColliders; ++i)
-            {
-                m_springColliderTransformHandles[i] = animator.BindStreamTransform(springColliders[i].transform);
-                m_colliders[i] = new SpringColliderComponent
-                {
-                    layer = springColliders[i].layer,
-                    type = springColliders[i].type,
-                    radius = springColliders[i].radius,
-                    width = springColliders[i].width,
-                    height = springColliders[i].height,
-                };
-            }
-            
-//            // Must get the ForceProviders in Start and not Awake or Unity will complain that
-//            // "the scene is not loaded"
-//            forceProviders = GameObjectUtil.FindComponentsOfType<ForceProvider>().ToArray();
-
-            // Create job.
             var springBoneJob = new SpringBoneJob
             {
                 rootHandle = animator.BindStreamTransform(transform),
@@ -120,8 +86,6 @@ namespace Unity.Animations.SpringBones.Jobs
                 collideWithGround = collideWithGround,
                 groundHeight = groundHeight,
             };
-            
-            InitializeJobData(ref springBoneJob, springBones);
 
             // Create graph.
             var graph = PlayableGraph.Create("SpringBone");
@@ -129,21 +93,74 @@ namespace Unity.Animations.SpringBones.Jobs
 
             m_SpringBonePlayable = AnimationScriptPlayable.Create(graph, springBoneJob);
             var output = AnimationPlayableOutput.Create(graph, "SpringBoneOutput", animator);
-            output.SetSourcePlayable(m_SpringBonePlayable);
+
+            // getting original animator moves
+            var ctrlPlayable = AnimatorControllerPlayable.Create(graph, animator.runtimeAnimatorController);
+
+            m_layerMixer = AnimationLayerMixerPlayable.Create (graph, 2);
+            m_layerMixer.ConnectInput (0, ctrlPlayable, 0);
+            m_layerMixer.ConnectInput (1, m_SpringBonePlayable, 0);
+            m_layerMixer.SetLayerAdditive (1, blendAdditive);
+            m_layerMixer.SetInputWeight (0, 1f-animatorBlendWeight);
+            m_layerMixer.SetInputWeight (1, animatorBlendWeight);
+            
+
+            output.SetSourcePlayable(m_layerMixer);
 
             return graph;
         }
         
-        private void InitializeJobData(ref SpringBoneJob job, SpringBone[] springBones)
+        private void InitializeColliders(Animator animator)
         {
-            for (var i = 0; i < springBones.Length; ++i)
+            m_colliderObjects = FindSpringColliders();
+            var nColliders = m_colliderObjects.Length;
+            
+            m_springColliderTransformHandles = new NativeArray<TransformStreamHandle>(nColliders, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+            
+            m_colliders = new NativeArray<SpringColliderComponent>(nColliders, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+
+            m_colliderTransforms = new NativeArray<SpringColliderTransform>(nColliders, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+
+            for (var i = 0; i < nColliders; ++i)
             {
-                InitializeSpringBoneComponent(i, springBones[i]);
+                m_springColliderTransformHandles[i] = animator.BindStreamTransform(m_colliderObjects[i].transform);
+            }
+
+            UpdateColliders();
+        }
+        
+        private void InitializeSpringBones(Animator animator)
+        {
+            var nSpringBones = m_springBoneObjects.Length;
+            m_springBoneParentTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+
+            m_springBoneTransformHandles = new NativeArray<TransformStreamHandle>(nSpringBones, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+
+            m_SpringBoneProperties = new NativeArray<SpringBoneProperties>(nSpringBones, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+            
+            m_springBoneComponents = new NativeArray<SpringBoneComponent>(nSpringBones, Allocator.Persistent,
+                NativeArrayOptions.UninitializedMemory);
+            
+            for (var i = 0; i < nSpringBones; ++i)
+            {
+                m_springBoneTransformHandles[i] = animator.BindStreamTransform(m_springBoneObjects[i].transform);
+                m_springBoneParentTransformHandles[i] = animator.BindStreamTransform(m_springBoneObjects[i].transform.parent);
+            }
+
+            for (var i = 0; i < nSpringBones; ++i)
+            {
+                InitializeSpringBoneComponent(i, in m_springBoneObjects[i]);
             }
         }
         
         // This should be called by the SpringManager in its Awake function before any updates
-        private void InitializeSpringBoneComponent(int index, SpringBone springBone)
+        private void InitializeSpringBoneComponent(int index, in SpringBone springBone)
         {
             var boneTransform = springBone.transform;
             var childPosition = ComputeChildBonePosition(springBone);
@@ -178,7 +195,8 @@ namespace Unity.Animations.SpringBones.Jobs
                 },
                 radius = springBone.radius,
                 boneAxis = boneAxis,
-                springLength = springLength
+                springLength = springLength,
+                collisionMask = springBone.collisionMask
             };
             
             m_springBoneComponents[index] = new SpringBoneComponent
@@ -194,6 +212,53 @@ namespace Unity.Animations.SpringBones.Jobs
             springBone.enabled = false; 
         }
         
+        private void UpdateColliders()
+        {
+            for (var i = 0; i < m_colliderObjects.Length; ++i)
+            {
+                m_colliders[i] = new SpringColliderComponent
+                {
+                    layer = m_colliderObjects[i].layer,
+                    type = m_colliderObjects[i].type,
+                    radius = m_colliderObjects[i].radius,
+                    width = m_colliderObjects[i].width,
+                    height = m_colliderObjects[i].height,
+                };
+            }
+        }
+
+        private void UpdateSpringBoneProperties()
+        {
+            for (var i = 0; i < m_springBoneObjects.Length; ++i)
+            {
+                var springBone = m_springBoneObjects[i];
+                m_SpringBoneProperties[i] = new SpringBoneProperties
+                {
+                    stiffnessForce = springBone.stiffnessForce,
+                    dragForce =  springBone.dragForce,
+                    springForce = springBone.springForce,
+                    windInfluence = springBone.windInfluence,
+                    angularStiffness = springBone.angularStiffness,
+                    yAngleLimits =  new AngleLimitComponent
+                    {
+                        active = springBone.yAngleLimits.active,
+                        min = springBone.yAngleLimits.min,
+                        max = springBone.yAngleLimits.max,
+                    },
+                    zAngleLimits = new AngleLimitComponent
+                    {
+                        active = springBone.zAngleLimits.active,
+                        min = springBone.zAngleLimits.min,
+                        max = springBone.zAngleLimits.max,
+                    },
+                    radius = springBone.radius,
+                    boneAxis = m_SpringBoneProperties[i].boneAxis,
+                    springLength = m_SpringBoneProperties[i].springLength,
+                    collisionMask = springBone.collisionMask
+                };                
+            }
+        }
+
         private static Vector3 ComputeChildBonePosition(SpringBone bone)
         {
             var boneTransform = bone.transform;
@@ -246,7 +311,6 @@ namespace Unity.Animations.SpringBones.Jobs
             return children;
         }
         
-        
         // Find SpringBones in children and assign them in depth order.
         // Note that the original list will be overwritten.
         private SpringBone[] FindSpringBones(bool includeInactive = false)
@@ -258,7 +322,7 @@ namespace Unity.Animations.SpringBones.Jobs
             boneDepthList.Sort((a, b) => a.depth.CompareTo(b.depth));
             return boneDepthList.Select(item => item.bone).ToArray();
         }
-        
+       
         private SpringCollider[] FindSpringColliders()
         {
             return GetComponentsInChildren<SpringCollider>(false);
@@ -310,6 +374,16 @@ namespace Unity.Animations.SpringBones.Jobs
 
         private void LateUpdate()
         {
+            if (Application.isEditor && allowInspectorEdit)
+            {
+                UpdateSpringBoneProperties();
+                UpdateColliders();
+            }
+            
+            m_layerMixer.SetInputWeight (0, 1f-animatorBlendWeight);
+            m_layerMixer.SetInputWeight (1, animatorBlendWeight);
+            m_layerMixer.SetLayerAdditive (1, blendAdditive);
+            
             var jobData = m_SpringBonePlayable.GetJobData<SpringBoneJob>();
 
             jobData.isPaused = isPaused;

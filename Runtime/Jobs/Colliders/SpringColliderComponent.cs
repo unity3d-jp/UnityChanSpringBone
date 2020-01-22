@@ -10,24 +10,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public float radius;
     }
     
-    public struct SpringCollisionLayerMask
-    {
-        public int value;
-
-        public static implicit operator int(SpringCollisionLayerMask mask)
-        {
-            return mask.value;
-        }
-
-        public static implicit operator SpringCollisionLayerMask(int intVal)
-        {
-            SpringCollisionLayerMask layerMask;
-            layerMask.value = intVal;
-            return layerMask;
-        }
-    }
-
-    public enum ColliderType
+    public enum ColliderType : int
     {
         Sphere,
         Panel,
@@ -37,7 +20,8 @@ namespace Unity.Animations.SpringBones.Jobs
     [Serializable]
     public struct SpringColliderComponent
     {
-        public SpringCollisionLayerMask layer;
+        public int index;
+        public int layer;
         public ColliderType type;
         public float radius;
         public float width;

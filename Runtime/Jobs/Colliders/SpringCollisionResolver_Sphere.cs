@@ -14,38 +14,36 @@ namespace Unity.Animations.SpringBones.Jobs
             float tailRadius
         )
         {
-            var localHeadPosition = (Vector3) (transform.worldToLocalMatrix * headPosition);
-            var localTailPosition = (Vector3) (transform.worldToLocalMatrix * tailPosition);
-            var localTailRadius = (transform.worldToLocalMatrix * new Vector3(tailRadius, 0f, 0f)).magnitude;
-            
-            var sphereLocalOrigin = Vector3.zero;
+            var localTailPosition = transform.worldToLocalMatrix.MultiplyPoint3x4(tailPosition);
+            var localTailSqrDistance = localTailPosition.sqrMagnitude;
 
-            var combinedRadius = sphere.radius + localTailRadius;
-            if ((localTailPosition - sphereLocalOrigin).sqrMagnitude >= combinedRadius * combinedRadius)
+            var combinedRadius = sphere.radius + tailRadius;
+            if (localTailSqrDistance >= combinedRadius * combinedRadius)
             {
                 // Not colliding
                 return false;
             }
 
-            var originToHead = localHeadPosition - sphereLocalOrigin;
-            if (originToHead.sqrMagnitude <= sphere.radius * sphere.radius)
+            var localHeadPosition = transform.worldToLocalMatrix.MultiplyPoint3x4(headPosition);
+            var localHeadSqrDistance = localHeadPosition.sqrMagnitude;
+
+            if (localHeadSqrDistance <= sphere.radius * sphere.radius)
             {
                 // The head is inside the sphere, so just try to push the tail out
-                localTailPosition = 
-                    sphereLocalOrigin + (localTailPosition - sphereLocalOrigin).normalized * combinedRadius;
+                localTailPosition = localTailPosition.normalized * combinedRadius;
             }
 
             var localHeadRadius = (localTailPosition - localHeadPosition).magnitude;
             if (ComputeIntersection_Sphere(
                 localHeadPosition, localHeadRadius,
-                sphereLocalOrigin, combinedRadius,
+                Vector3.zero, combinedRadius,
                 out var intersection))
             {
                 localTailPosition = ComputeNewTailPosition_Sphere(intersection, localTailPosition);
             }
 
-            tailPosition = transform.localToWorldMatrix * localTailPosition;
-            hitNormal = (transform.localToWorldMatrix * localTailPosition.normalized).normalized;
+            tailPosition = transform.localToWorldMatrix.MultiplyPoint3x4(localTailPosition);
+            hitNormal = transform.localToWorldMatrix.MultiplyPoint3x4(localTailPosition.normalized).normalized;
 
             return true;
         }

@@ -22,32 +22,30 @@ namespace Unity.Animations.SpringBones.Jobs
             float tailRadius
         )
         {
-            var localTailPosition = transform.localToWorldMatrix * tailPosition;
-//            var localTailRadius = (transform.localToWorldMatrix * new Vector3(tailRadius, 0f, 0f)).magnitude;
-            var localTailRadius = tailRadius;
-            if (localTailPosition.z >= localTailRadius)
+            var localTailPosition = transform.localToWorldMatrix.MultiplyPoint3x4(tailPosition);
+            
+            // Plane transform is z-up. if hence z >= tailRadius, there is no collision.  
+            if (localTailPosition.z >= tailRadius)
             {
                 return false;
             }
 
-            var localHeadPosition = transform.worldToLocalMatrix * (headPosition);
-//            var localLength = (transform.worldToLocalMatrix * new Vector3(length, 0f, 0f)).magnitude;
-            var localLength = length;
+            var localHeadPosition = transform.worldToLocalMatrix.MultiplyPoint3x4(headPosition);
 
-            var halfWidth = 0.5f * panel.width;
-            var halfHeight = 0.5f * panel.height;
-            var adjustedWidth = halfWidth + localTailRadius;
-            var adjustedHeight = halfHeight + localTailRadius;
+            var halfWidth = panel.width / 2f;
+            var halfHeight = panel.height /2f;
 
-            var tailOutOfBounds = Mathf.Abs(localTailPosition.y) >= adjustedHeight
-                                  || Mathf.Abs(localTailPosition.x) >= adjustedWidth;
-
-            if (tailOutOfBounds)
+            var pointOnPlane = Vector3.Lerp(localHeadPosition, localTailPosition,
+                Mathf.Clamp01(localHeadPosition.z/(localHeadPosition.z - localTailPosition.z)));
+            
+            if (Mathf.Abs(pointOnPlane.x) >= halfWidth + tailRadius || 
+                Mathf.Abs(pointOnPlane.y) >= halfHeight + tailRadius)
             {
                 return false;
             }
 
             // Check edges
+            // SpringBone is entirely over plane (only sphere is crossing)
             if (localHeadPosition.z <= 0f && localTailPosition.z <= 0f)
             {
                 if (Mathf.Abs(localHeadPosition.y) > halfHeight)
@@ -63,46 +61,39 @@ namespace Unity.Animations.SpringBones.Jobs
                 else
                 {
                     localTailPosition = localHeadPosition;
-                    localTailPosition.z = localTailRadius;
+                    localTailPosition.z = length;
                 }
-            } else {
+            } 
+            
+            else {
                 if (Mathf.Abs(localTailPosition.y) > halfHeight)
                 {
                     halfHeight = (localTailPosition.y < 0f) ? -halfHeight : halfHeight;
                     var localNormal = new Vector3(0f, localTailPosition.y - halfHeight, localTailPosition.z).normalized;
                     localTailPosition =
-                        new Vector3(localTailPosition.x, halfHeight, 0f) + localTailRadius * localNormal;
+                        new Vector3(localTailPosition.x, halfHeight, 0f) + tailRadius * localNormal;
                 }
                 else if (Mathf.Abs(localTailPosition.x) > halfWidth)
                 {
                     halfWidth = (localTailPosition.x < 0f) ? -halfWidth : halfWidth;
                     var localNormal = new Vector3(localTailPosition.x - halfWidth, 0f, localTailPosition.z).normalized;
-                    localTailPosition = new Vector3(halfWidth, localTailPosition.y, 0f) + localTailRadius * localNormal;
+                    localTailPosition = new Vector3(halfWidth, localTailPosition.y, 0f) + tailRadius * localNormal;
                 }
                 else
                 {
-                    const int xIndex = (int) Axis.X;
-                    const int yIndex = (int) Axis.Y;
-                    const int zIndex = (int) Axis.Z;
-                    
-                    if (localTailPosition[zIndex] >= localTailRadius)
-                    {
-                        return false;
-                    }
-
                     var newLocalTailPosition = localHeadPosition;
-                    if (localHeadPosition[zIndex] + localLength <= localTailRadius)
+                    if (localHeadPosition.z + length <= tailRadius)
                     {
                         // Bone is completely embedded
-                        newLocalTailPosition[zIndex] += localLength;
+                        newLocalTailPosition.z += length;
                     }
                     else
                     {
-                        var heightAboveRadius = localHeadPosition[zIndex] - localTailRadius;
+                        var heightAboveRadius = localHeadPosition.z - tailRadius;
                         var projectionLength =
-                            Mathf.Sqrt(localLength * localLength - heightAboveRadius * heightAboveRadius);
+                            Mathf.Sqrt(length * length - heightAboveRadius * heightAboveRadius);
                         var localBoneVector = localTailPosition - localHeadPosition;
-                        var projectionVector = new Vector2(localBoneVector[xIndex], localBoneVector[yIndex]);
+                        var projectionVector = new Vector2(localBoneVector.x, localBoneVector.y);
                         var projectionVectorLength = projectionVector.magnitude;
                         if (projectionVectorLength > 0.001f)
                         {
@@ -111,7 +102,7 @@ namespace Unity.Animations.SpringBones.Jobs
                             {
                                 x = newLocalTailPosition.x + projection.x,
                                 y = newLocalTailPosition.y + projection.y,
-                                z = newLocalTailPosition.z + localTailRadius,
+                                z = newLocalTailPosition.z + tailRadius,
                                 w = 0f
                             };
                         }
@@ -120,9 +111,8 @@ namespace Unity.Animations.SpringBones.Jobs
                 }
             }
 
-            tailPosition = transform.localToWorldMatrix * (localTailPosition);
-            //hitNormal = transform.forward.normalized;
-            hitNormal = (transform.localToWorldMatrix * Vector3.forward).normalized; 
+            tailPosition = transform.localToWorldMatrix.MultiplyPoint3x4(localTailPosition);
+            hitNormal = transform.localToWorldMatrix.MultiplyPoint3x4(Vector3.forward).normalized; 
 
             return true;
         }

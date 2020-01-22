@@ -21,6 +21,21 @@ namespace Unity.Animations.SpringBones
 
             var bone = (SpringBone)target;
 
+            if (m_propMask != null)
+            {
+                GUILayout.BeginVertical("box");
+                GUILayout.Label("Job Collision", "BoldLabel");
+                var oldMaskValue = m_propMask.intValue;
+                var newMaskValue = EditorGUILayout.MaskField("Collision Mask", oldMaskValue,
+                    SpringBoneLayerSettings.GetOrCreateSettings().Layers);
+                if (oldMaskValue != newMaskValue)
+                {
+                    m_propMask.intValue = newMaskValue;
+                }
+                GUILayout.EndVertical();
+                GUILayout.Space(10f);
+            }
+
             if (GUILayout.Button("基点を選択", SpringBoneGUIStyles.ButtonStyle))
             {
                 Selection.objects = targets
@@ -85,6 +100,8 @@ namespace Unity.Animations.SpringBones
         private PropertySet[] propertySets;
         private bool showOriginalInspector = false;
         private Inspector3DRenderer renderer;
+
+        private SerializedProperty m_propMask;
 
         private void RenderAngleLimits
         (
@@ -265,6 +282,8 @@ namespace Unity.Animations.SpringBones
             {
                 set.Initialize(serializedObject);
             }
+
+            m_propMask = serializedObject.FindProperty("collisionMask");
         }
 
         private static void SelectSpringManager(SpringBone bone)

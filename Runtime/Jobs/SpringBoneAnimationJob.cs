@@ -21,7 +21,7 @@ namespace Unity.Animations.SpringBones.Jobs
         public float radius;
         public float springLength;
         public Vector3 boneAxis;
-        public SpringCollisionLayerMask layer;
+        public int collisionMask;
     }
 
     [System.Serializable]
@@ -343,10 +343,10 @@ namespace Unity.Animations.SpringBones.Jobs
                 var colliderTransform = colliderTransforms[i];
 
                 // comment out for testing
-//                if ((collider.layer & prop.layer) == 0)
-//                {
-//                    continue;
-//                }
+                if ((prop.collisionMask & (1 << collider.layer)) == 0)
+                {
+                    continue;
+                }
                 
                 switch (collider.type)
                 {

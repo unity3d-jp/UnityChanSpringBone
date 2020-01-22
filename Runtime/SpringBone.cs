@@ -38,13 +38,18 @@ namespace Unity.Animations.SpringBones
         public SpringCapsuleCollider[] capsuleColliders;
         public SpringPanelCollider[] panelColliders;
 
+        public int collisionMask = -1;
+
+        public List<Transform> children;
+        
         public Vector3 CurrentTipPosition { get { return currTipPos; } }
 
         // This should be called by the SpringManager in its Awake function before any updates
         public void Initialize(SpringManager owner)
         {
             manager = owner;
-
+            children = GetValidChildren(transform);
+            
             var childPosition = ComputeChildPosition();
             var localChildPosition = transform.InverseTransformPoint(childPosition);
             boneAxis = localChildPosition.normalized;
@@ -65,14 +70,17 @@ namespace Unity.Animations.SpringBones
         
         public Vector3 ComputeChildPosition()
         {
-            var children = GetValidChildren(transform);
             var childCount = children.Count;
-
             if (childCount == 0)
             {
-                // This should never happen
-                Debug.LogWarning("SpringBone「" + name + "」に有効な子供がありません");
-                return transform.position + transform.right * -0.1f;
+                children = GetValidChildren(transform);
+                
+                if (childCount == 0)
+                {
+                    // This should never happen
+                    Debug.LogWarning("SpringBone「" + name + "」に有効な子供がありません");
+                    return transform.position + transform.right * -0.1f;
+                }
             }
 
             if (childCount == 1)
@@ -217,7 +225,7 @@ namespace Unity.Animations.SpringBones
         private Vector3 prevTipPos;
         private float[] lengthsToLimitTargets;
 
-        private static IList<Transform> GetValidChildren(Transform parent)
+        private static List<Transform> GetValidChildren(Transform parent)
         {
             // Ignore SpringBonePivots
             var childCount = parent.childCount;
@@ -428,89 +436,89 @@ namespace Unity.Animations.SpringBones
             return currTipPos + movement;
         }
 
-#if UNITY_EDITOR
-        public void DrawSpringBoneCollision()
-        {
-            var childPosition = ComputeChildPosition();
-            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
-            // For picking
-            Gizmos.DrawSphere(childPosition, worldRadius);
-
-            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.up, worldRadius);
-            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.right, worldRadius);
-            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.forward, worldRadius);
-            //UnityEditor.Handles.RadiusHandle(Quaternion.identity, childPosition, worldRadius);
-        }
-
-        public void MarkCollidersForDrawing()
-        {
-            if (sphereColliders != null)
-            {
-                for (int colliderIndex = 0; colliderIndex < sphereColliders.Length; colliderIndex++)
-                {
-                    if (sphereColliders[colliderIndex] != null) { sphereColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
-                }
-            }
-            if (capsuleColliders != null)
-            {
-                for (int colliderIndex = 0; colliderIndex < capsuleColliders.Length; colliderIndex++)
-                {
-                    if (capsuleColliders[colliderIndex] != null) { capsuleColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
-                }
-            }
-            if (panelColliders != null)
-            {
-                for (int colliderIndex = 0; colliderIndex < panelColliders.Length; colliderIndex++)
-                {
-                    if (panelColliders[colliderIndex] != null) { panelColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
-                }
-            }
-        }
-
-        public void DrawAngleLimits(AngleLimits angleLimits, float drawScale)
-        {
-            if (angleLimits.active)
-            {
-                var pivot = GetPivotTransform();
-                var forward = -pivot.right;
-                var side = (angleLimits == yAngleLimits) ? -pivot.up : -pivot.forward;
-                angleLimits.DrawLimits(transform.position, side, forward, drawScale);
-            }
-        }
-
-        private void DrawLinesToLimitTargets()
-        {
-            if (lengthLimitTargets == null
-                || lengthsToLimitTargets == null
-                || lengthLimitTargets.Length != lengthsToLimitTargets.Length)
-            {
-                return;
-            }
-
-            var SelfToLimitColor = new Color(1f, 1f, 1f);
-            var SelfToTargetColor = new Color(0.5f, 0.6f, 0.5f);
-            var ExceededLimitColor = new Color(1f, 0.5f, 0.5f);
-
-            var targetCount = lengthLimitTargets.Length;
-            var selfPosition = ComputeChildPosition();
-            for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
-            {
-                var target = lengthLimitTargets[targetIndex];
-                var distance = lengthsToLimitTargets[targetIndex];
-                if (target != null)
-                {
-                    var targetPosition = target.position;
-                    var selfToTarget = targetPosition - selfPosition;
-                    var limitPosition = selfPosition + distance * selfToTarget.normalized;
-
-                    Gizmos.color = SelfToLimitColor;
-                    Gizmos.DrawLine(limitPosition, selfPosition);
-                    Gizmos.color = (selfToTarget.sqrMagnitude > distance * distance) ?
-                        ExceededLimitColor : SelfToTargetColor;
-                    Gizmos.DrawLine(targetPosition, limitPosition);
-                }
-            }
-        }
-#endif
+//#if UNITY_EDITOR
+//        public void DrawSpringBoneCollision()
+//        {
+//            var childPosition = ComputeChildPosition();
+//            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+//            // For picking
+//            Gizmos.DrawSphere(childPosition, worldRadius);
+//
+//            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.up, worldRadius);
+//            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.right, worldRadius);
+//            UnityEditor.Handles.DrawWireDisc(childPosition, Vector3.forward, worldRadius);
+//            //UnityEditor.Handles.RadiusHandle(Quaternion.identity, childPosition, worldRadius);
+//        }
+//
+//        public void MarkCollidersForDrawing()
+//        {
+//            if (sphereColliders != null)
+//            {
+//                for (int colliderIndex = 0; colliderIndex < sphereColliders.Length; colliderIndex++)
+//                {
+//                    if (sphereColliders[colliderIndex] != null) { sphereColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
+//                }
+//            }
+//            if (capsuleColliders != null)
+//            {
+//                for (int colliderIndex = 0; colliderIndex < capsuleColliders.Length; colliderIndex++)
+//                {
+//                    if (capsuleColliders[colliderIndex] != null) { capsuleColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
+//                }
+//            }
+//            if (panelColliders != null)
+//            {
+//                for (int colliderIndex = 0; colliderIndex < panelColliders.Length; colliderIndex++)
+//                {
+//                    if (panelColliders[colliderIndex] != null) { panelColliders[colliderIndex].shouldDrawGizmosThisFrame = true; }
+//                }
+//            }
+//        }
+//
+//        public void DrawAngleLimits(AngleLimits angleLimits, float drawScale)
+//        {
+//            if (angleLimits.active)
+//            {
+//                var pivot = GetPivotTransform();
+//                var forward = -pivot.right;
+//                var side = (angleLimits == yAngleLimits) ? -pivot.up : -pivot.forward;
+//                angleLimits.DrawLimits(transform.position, side, forward, drawScale);
+//            }
+//        }
+//
+//        private void DrawLinesToLimitTargets()
+//        {
+//            if (lengthLimitTargets == null
+//                || lengthsToLimitTargets == null
+//                || lengthLimitTargets.Length != lengthsToLimitTargets.Length)
+//            {
+//                return;
+//            }
+//
+//            var SelfToLimitColor = new Color(1f, 1f, 1f);
+//            var SelfToTargetColor = new Color(0.5f, 0.6f, 0.5f);
+//            var ExceededLimitColor = new Color(1f, 0.5f, 0.5f);
+//
+//            var targetCount = lengthLimitTargets.Length;
+//            var selfPosition = ComputeChildPosition();
+//            for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+//            {
+//                var target = lengthLimitTargets[targetIndex];
+//                var distance = lengthsToLimitTargets[targetIndex];
+//                if (target != null)
+//                {
+//                    var targetPosition = target.position;
+//                    var selfToTarget = targetPosition - selfPosition;
+//                    var limitPosition = selfPosition + distance * selfToTarget.normalized;
+//
+//                    Gizmos.color = SelfToLimitColor;
+//                    Gizmos.DrawLine(limitPosition, selfPosition);
+//                    Gizmos.color = (selfToTarget.sqrMagnitude > distance * distance) ?
+//                        ExceededLimitColor : SelfToTargetColor;
+//                    Gizmos.DrawLine(targetPosition, limitPosition);
+//                }
+//            }
+//        }
+//#endif
     }
 }

@@ -44,8 +44,8 @@ namespace Unity.Animations.SpringBones.Jobs
                     // The head is inside the sphere, so just try to push the tail out
                     var localHitNormal = (localMoverPosition - sphereOrigin).normalized;
                     localMoverPosition = sphereOrigin + localHitNormal * combinedRadius;
-                    moverPosition = transform.localToWorldMatrix * localMoverPosition;
-                    hitNormal = (transform.localToWorldMatrix * localHitNormal).normalized;
+                    moverPosition = transform.localToWorldMatrix.MultiplyPoint3x4(localMoverPosition);
+                    hitNormal = (transform.localToWorldMatrix.MultiplyPoint3x4(localHitNormal)).normalized;
                     return true;
                 }
 
@@ -56,9 +56,9 @@ namespace Unity.Animations.SpringBones.Jobs
                     out var intersection))
                 {
                     localMoverPosition = ComputeNewTailPosition_Sphere(intersection, localMoverPosition);
-                    moverPosition = transform.localToWorldMatrix * localMoverPosition;
+                    moverPosition = transform.localToWorldMatrix.MultiplyPoint3x4(localMoverPosition);
                     var localHitNormal = (localMoverPosition - sphereOrigin).normalized;
-                    hitNormal = (transform.localToWorldMatrix * localHitNormal).normalized;
+                    hitNormal = (transform.localToWorldMatrix.MultiplyPoint3x4(localHitNormal)).normalized;
                 }
 
                 return true;
@@ -72,8 +72,8 @@ namespace Unity.Animations.SpringBones.Jobs
                 var normal = originToMover.normalized;
                 originToMover = combinedRadius * normal;
                 var newLocalMoverPosition = new Vector3(originToMover.x, localMoverPosition.y, originToMover.y);
-                moverPosition = transform.localToWorldMatrix * newLocalMoverPosition;
-                hitNormal = (transform.localToWorldMatrix * new Vector3(normal.x, 0f, normal.y)).normalized;
+                moverPosition = transform.localToWorldMatrix.MultiplyPoint3x4(newLocalMoverPosition);
+                hitNormal = transform.localToWorldMatrix.MultiplyPoint3x4(new Vector3(normal.x, 0f, normal.y)).normalized;
             }
 
             return collided;

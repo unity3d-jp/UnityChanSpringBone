@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Unity.Animations.SpringBones.Jobs
 {
     // Authoring component
     public class SpringCollider : MonoBehaviour
     {
-        public SpringCollisionLayerMask layer;
+        public int layer;
         public ColliderType type;
         public float radius;
         public float width;
