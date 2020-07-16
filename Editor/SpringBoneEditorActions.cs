@@ -3,11 +3,39 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.Localization.Editor;
 
 namespace Unity.Animations.SpringBones
 {
     public static class SpringBoneEditorActions
     {
+        private static class Styles
+        {
+            public static readonly string logStopPlayMode = Localization.Tr("You must stop Playmode first.");
+            public static readonly string logSelectOneOrMoreObjects = Localization.Tr("Select one or more objects.");
+            public static readonly string logSelectOnlyOneSpringManager = Localization.Tr("Select only one SpringManager");
+
+            public static readonly string textDelete = Localization.Tr("Delete");
+            public static readonly string textCancel = Localization.Tr("Cancel");
+            public static readonly string textUpdate = Localization.Tr("Update");
+            
+            public static readonly string textDeleteSpringBoneAndManager = Localization.Tr("Delete SpringBone and Manager");
+            public static readonly string textDeleteSelectedBones = Localization.Tr("Delete selected bones");
+            
+            public static readonly string textUpdateFromBoneList = Localization.Tr("Update from bone list");
+            
+            public static readonly string textConfirmRemoveAllBoneAndManagerFormat = Localization.Tr(
+                "Do you really want to remove all\n" + 
+                "SpringBones and managers under this object?\n" +
+                "\n{0}");
+            
+            public static readonly string textConfirmUpdateBonesFromListFormat = Localization.Tr(
+                "Do you want to update secondary bones from bone list?\n" +
+                    "\nThis will remove all SpringBones that are not listed,\n" +
+                    "and will add SpringBones missing in model.\n" +
+                    "\nSpringManager: {0}\n");
+        }
+
         public static void ShowSpringBoneWindow()
         {
             SpringBoneWindow.ShowWindow();
@@ -17,13 +45,13 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError("再生モードを止めてください。");
+                Debug.LogError(Styles.logStopPlayMode);
                 return;
             }
 
             if (Selection.gameObjects.Length < 1)
             {
-                Debug.LogError("一つ以上のオブジェクトを選択してください。");
+                Debug.LogError(Styles.logSelectOneOrMoreObjects);
                 return;
             }
 
@@ -50,13 +78,13 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError("再生モードを止めてください。");
+                Debug.LogError(Styles.logStopPlayMode);
                 return;
             }
 
             if (Selection.gameObjects.Length < 1)
             {
-                Debug.LogError("一つ以上のオブジェクトを選択してください。");
+                Debug.LogError(Styles.logSelectOneOrMoreObjects);
                 return;
             }
 
@@ -73,13 +101,13 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError("再生モードを止めてください。");
+                Debug.LogError(Styles.logStopPlayMode);
                 return;
             }
 
             if (Selection.gameObjects.Length <= 0)
             {
-                Debug.LogError("一つ以上のオブジェクトを選択してください。");
+                Debug.LogError(Styles.logSelectOneOrMoreObjects);
                 return;
             }
 
@@ -105,22 +133,20 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError("再生モードを止めてください。");
+                Debug.LogError(Styles.logStopPlayMode);
                 return;
             }
 
             if (Selection.gameObjects.Length != 1)
             {
-                Debug.LogError("一つだけのルートオブジェクトを選択してください");
+                Debug.LogError(Styles.logSelectOneOrMoreObjects);
                 return;
             }
 
             var rootObject = Selection.gameObjects.First();
-            var queryMessage = "本当にこのオブジェクトとその子供に入っている全ての\n"
-                + "スプリングボーンとスプリングマネージャーを削除しますか？\n\n"
-                + rootObject.name;
+            var queryMessage = string.Format(Styles.textConfirmRemoveAllBoneAndManagerFormat, rootObject.name);
             if (EditorUtility.DisplayDialog(
-                "スプリングボーンとマネージャーを削除", queryMessage, "削除", "キャンセル"))
+                Styles.textDeleteSpringBoneAndManager, queryMessage, Styles.textDelete, Styles.textCancel))
             {
                 SpringBoneSetup.DestroySpringManagersAndBones(rootObject);
                 AssetDatabase.Refresh();
@@ -135,7 +161,7 @@ namespace Unity.Animations.SpringBones
             var springManagersToUpdate = GameObjectUtil.FindComponentsOfType<SpringManager>()
                 .Where(manager => manager.springBones.Any(bone => springBonesToDelete.Contains(bone)))
                 .ToArray();
-            Undo.RecordObjects(springManagersToUpdate, "Delete selected bones");
+            Undo.RecordObjects(springManagersToUpdate, Styles.textDeleteSelectedBones);
             foreach (var boneToDelete in springBonesToDelete)
             {
                 Undo.DestroyObjectImmediate(boneToDelete);
@@ -150,7 +176,7 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError("再生中に更新できません");
+                Debug.LogError(Styles.logStopPlayMode);
                 return;
             }
 
@@ -165,16 +191,14 @@ namespace Unity.Animations.SpringBones
 
             if (selectedSpringManagers.Count() != 1)
             {
-                Debug.LogError("一つだけのSpringManagerを選択してください");
+                Debug.LogError(Styles.logSelectOnlyOneSpringManager);
                 return;
             }
 
             var springManager = selectedSpringManagers.First();
-            var queryMessage = "ボーンリストから揺れものボーンを更新しますか？\n\n"
-                + "リストにないSpringBone情報は削除され、\n"
-                + "モデルにないSpringBone情報は追加されます。\n\n"
-                + "SpringManager: " + springManager.name;
-            if (EditorUtility.DisplayDialog("ボーンリストから更新", queryMessage, "更新", "キャンセル"))
+            var queryMessage = string.Format(Styles.textConfirmUpdateBonesFromListFormat, springManager.name);
+             
+            if (EditorUtility.DisplayDialog(Styles.textUpdateFromBoneList, queryMessage, Styles.textUpdate, Styles.textCancel))
             {
                 AutoSpringBoneSetup.UpdateSpringManagerFromBoneList(springManager);
             }

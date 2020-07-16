@@ -1,15 +1,25 @@
 ﻿using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.Localization.Editor;
 
 namespace Unity.Animations.SpringBones
 {
     public class SetObjectParentWindow : EditorWindow
     {
-        [MenuItem("UTJ/親子付け")]
+        private static class Styles
+        {
+            public static readonly string editorWindowTitle = Localization.Tr("Parenting Tool");
+
+            public static readonly GUIContent labelNewParent = new GUIContent(Localization.Tr("New Parent"));
+            public static readonly GUIContent labelSetParent = new GUIContent(Localization.Tr("Set Parent"));
+        }
+
+
+        [MenuItem("Window/Animation/SpringBone/Parenting Tool")]
         public static void ShowWindow()
         {
-            GetWindow<SetObjectParentWindow>("親子付け");
+            GetWindow<SetObjectParentWindow>(Styles.editorWindowTitle);
         }
 
         // private
@@ -31,9 +41,9 @@ namespace Unity.Animations.SpringBones
         private void OnGUI()
         {
             EditorGUILayout.Space();
-            newParent = EditorGUILayout.ObjectField("新しい親", newParent, typeof(Transform), true) as Transform;
+            newParent = EditorGUILayout.ObjectField(Styles.labelNewParent, newParent, typeof(Transform), true) as Transform;
             EditorGUILayout.Space();
-            if (GUILayout.Button("親子付け"))
+            if (GUILayout.Button(Styles.labelSetParent))
             {
                 ReparentSelectedObjects();
             }
