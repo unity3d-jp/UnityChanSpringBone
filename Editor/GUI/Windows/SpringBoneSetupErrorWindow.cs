@@ -2,7 +2,11 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEditor.Localization.Editor;
+#if UNITY_2020_2_OR_NEWER
+using Localization = UnityEditor.L10n;
+#else
+using Localization = UnityEditor.Localization.Editor.Localization;
+#endif
 
 namespace Unity.Animations.SpringBones
 {
