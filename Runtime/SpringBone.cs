@@ -264,7 +264,7 @@ namespace Unity.Animations.SpringBones
         {
             var desiredPosition = currTipPos;
             var headPosition = transform.position;
-            var scaledRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var scaledRadius = transform.TransformVector(radius, 0f, 0f).magnitude;
             var hitNormal = new Vector3(0f, 0f, 1f);
 
             var hadCollision = false;
@@ -333,7 +333,7 @@ namespace Unity.Animations.SpringBones
             // Todo: this assumes a flat ground parallel to the xz plane
             var worldHeadPosition = transform.position;
             var worldTailPosition = currTipPos;
-            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldRadius = transform.TransformVector(radius, 0f, 0f).magnitude;
             var worldLength = (currTipPos - worldHeadPosition).magnitude;
             var groundHeight = manager.groundHeight;
             worldHeadPosition.y -= groundHeight;
@@ -432,7 +432,7 @@ namespace Unity.Animations.SpringBones
         public void DrawSpringBoneCollision()
         {
             var childPosition = ComputeChildPosition();
-            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldRadius = transform.TransformVector(radius, 0f, 0f).magnitude;
             // For picking
             Gizmos.DrawSphere(childPosition, worldRadius);
 

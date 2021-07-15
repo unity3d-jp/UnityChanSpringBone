@@ -20,7 +20,7 @@ namespace Unity.Animations.SpringBones
         {
             var localHeadPosition = transform.InverseTransformPoint(headPosition);
             var localTailPosition = transform.InverseTransformPoint(tailPosition);
-            var localTailRadius = transform.InverseTransformDirection(tailRadius, 0f, 0f).magnitude;
+            var localTailRadius = transform.InverseTransformVector(tailRadius, 0f, 0f).magnitude;
 
 #if UNITY_EDITOR
             var originalLocalTailPosition = localTailPosition;
@@ -141,7 +141,7 @@ namespace Unity.Animations.SpringBones
 
         public void DrawGizmos(Color drawColor)
         {
-            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldRadius = transform.TransformVector(radius, 0f, 0f).magnitude;
             // For picking
             Gizmos.color = new Color(0f, 0f, 0f, 0f);
             Gizmos.DrawWireSphere(transform.position, worldRadius);
