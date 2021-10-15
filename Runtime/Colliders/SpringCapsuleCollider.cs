@@ -147,7 +147,7 @@ namespace Unity.Animations.SpringBones
                 endRingPoints = new Vector3[PointCount];
             }
 
-            var worldRadius = transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldRadius = transform.TransformVector(radius, 0f, 0f).magnitude;
 
             var startCapOrigin = transform.position;
             var endCapOrigin = transform.TransformPoint(0f, height, 0f);
@@ -221,7 +221,7 @@ namespace Unity.Animations.SpringBones
             var start = transform.position;
             var end = transform.TransformPoint(0f, height, 0f);
             var center = 0.5f * (start + end);
-            var worldRadius = 1.5f * transform.TransformDirection(radius, 0f, 0f).magnitude;
+            var worldRadius = 1.5f * transform.TransformVector(radius, 0f, 0f).magnitude;
             var size = new Vector3(
                 Mathf.Abs(end.x - start.x) + worldRadius,
                 Mathf.Abs(end.y - start.y) + worldRadius,
@@ -259,7 +259,7 @@ namespace Unity.Animations.SpringBones
             var localContactPoint = new Vector3(originToContactPoint.x, localMoverPosition.y, originToContactPoint.z);
             var worldContactPoint = transform.TransformPoint(localContactPoint);
             var worldNormal = transform.TransformDirection(localNormal).normalized;
-            var worldRadius = transform.TransformDirection(localMoverRadius, 0f, 0f).magnitude;
+            var worldRadius = transform.TransformVector(localMoverRadius, 0f, 0f).magnitude;
             m_colliderDebugger.RecordCollision(
                 worldContactPoint,
                 worldNormal,
