@@ -13,7 +13,6 @@ namespace Unity.Animations.SpringBones
         {
             InitializeData();
 
-            SpringBoneGUIStyles.ReacquireStyles();
             if (GUILayout.Button("ボーンを選択", SpringBoneGUIStyles.ButtonStyle))
             {
                 Selection.objects = bones.Select(bone => bone.gameObject).ToArray();

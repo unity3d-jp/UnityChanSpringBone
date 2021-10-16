@@ -3,38 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public static class SpringColliderEditorActions
     {
-        private static class Styles
-        {
-            public static readonly string logStopPlayMode = Localization.Tr("You must stop Playmode first.");
-            public static readonly string textAlignCapsulesToParent = Localization.Tr("Align capsules to parents");
-            public static readonly string textConfirmDeleteCollisions = Localization.Tr("Do you really want to remove collisions from selected SpringBones?");
-            public static readonly string textRemoveCollisions = Localization.Tr("Remove Collisions");
-            public static readonly string textRemove = Localization.Tr("Remove");
-            public static readonly string textCancel = Localization.Tr("Cancel");
-            public static readonly string textRemoveDuplicateComponents = Localization.Tr("Remove duplicate components");
-            public static readonly string textCleanupSpringBone = Localization.Tr("Cleanup SpringBones");
-            public static readonly string textConfirmDynamicCleanup = Localization.Tr("Do you really want to cleanup dynamics?");
-            public static readonly string textCleanupDynamics = Localization.Tr("Cleanup Dynamics");
-            public static readonly string textRemoveAllChildColliders = Localization.Tr("Remove all selected child colliders");
-            public static readonly string textConfirmRemoveAllChildColliders = Localization.Tr("Do you really want to remove all colliders from children?");
-            public static readonly string textRemoveSelectedColliders = Localization.Tr("Remove Colliders");
-        }
-
         public static IList<GameObject> CreateObjectsWithComponentBeneathSelectedObjects<T>(string suffix) where T : Component
         {
             if (Application.isPlaying)
             {
-                Debug.LogError(Styles.logStopPlayMode);
+                Debug.LogError("再生モードを止めてください。");
                 return new List<GameObject>();
             }
 
@@ -65,7 +43,7 @@ namespace Unity.Animations.SpringBones
             var undoObjects = new List<Object>();
             undoObjects.AddRange(capsules.Select(item => (Object)item));
             undoObjects.AddRange(capsules.Select(item => (Object)item.transform));
-            Undo.RecordObjects(undoObjects.ToArray(), Styles.textAlignCapsulesToParent);
+            Undo.RecordObjects(undoObjects.ToArray(), "Align capsules to parents");
             foreach (var capsule in capsules)
             {
                 capsule.transform.localPosition = Vector3.zero;
@@ -118,7 +96,7 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError(Styles.logStopPlayMode);
+                Debug.LogError("再生モードを止めてください。");
                 return;
             }
 
@@ -127,10 +105,10 @@ namespace Unity.Animations.SpringBones
                 .Where(bone => bone != null);
             if (!selectedBones.Any()) { return; }
 
-            var queryMessage = Styles.textConfirmDeleteCollisions;
-            if (EditorUtility.DisplayDialog(Styles.textConfirmDeleteCollisions, queryMessage, Styles.textRemove, Styles.textCancel))
+            var queryMessage = "本当に選択SpringBoneのコリジョンを削除しますか？";
+            if (EditorUtility.DisplayDialog("コリジョンを削除", queryMessage, "削除", "キャンセル"))
             {
-                Undo.RecordObjects(selectedBones.ToArray(), Styles.textRemoveCollisions);
+                Undo.RecordObjects(selectedBones.ToArray(), "コリジョンを削除");
                 foreach (var springBone in selectedBones)
                 {
                     springBone.RemoveAllColliders();
@@ -142,14 +120,14 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError(Styles.logStopPlayMode);
+                Debug.LogError("再生モードを止めてください。");
                 return;
             }
 
             if (Selection.gameObjects.Length == 0) { return; }
 
-            var queryMessage = Styles.textConfirmRemoveAllChildColliders;
-            if (!EditorUtility.DisplayDialog(Styles.textRemoveSelectedColliders, queryMessage, Styles.textRemove, Styles.textCancel))
+            var queryMessage = "本当に選択中のオブジェクトの全子供のコライダーを削除しますか？";
+            if (!EditorUtility.DisplayDialog("選択コライダーを削除", queryMessage, "削除", "キャンセル"))
             {
                 return;
             }
@@ -180,7 +158,7 @@ namespace Unity.Animations.SpringBones
             var undoObjects = new List<Object>(springBones.Select(item => (Object)item));
             undoObjects.AddRange(deadColliders.Select(item => (Object)item));
             undoObjects.AddRange(probablyDeadGameObjects.Select(item => (Object)item));
-            Undo.RecordObjects(undoObjects.ToArray(), Styles.textRemoveAllChildColliders);
+            Undo.RecordObjects(undoObjects.ToArray(), "Remove all selected child colliders");
 
             foreach (var springBone in springBones)
             {
@@ -204,15 +182,15 @@ namespace Unity.Animations.SpringBones
         {
             if (Application.isPlaying)
             {
-                Debug.LogError(Styles.logStopPlayMode);
+                Debug.LogError("再生モードを止めてください。");
                 return;
             }
 
             var springManagers = GameObjectUtil.FindComponentsOfType<SpringManager>();
             if (!springManagers.Any()) { return; }
 
-            var queryMessage = Styles.textConfirmDynamicCleanup;
-            if (EditorUtility.DisplayDialog(Styles.textCleanupDynamics, queryMessage, Styles.textRemove, Styles.textCancel))
+            var queryMessage = "本当にダイナミクスのクリーンナップを行いますか？";
+            if (EditorUtility.DisplayDialog("ダイナミクスクリーンナップ", queryMessage, "削除", "キャンセル"))
             {
                 RemoveDuplicateComponents<SpringBone>();
                 RemoveDuplicateComponents<DynamicsNull>();
@@ -261,7 +239,7 @@ namespace Unity.Animations.SpringBones
                     }
 
                     // Next remove all empty entries from SpringBones
-                    Undo.RecordObjects(springBones.ToArray(), Styles.textCleanupSpringBone);
+                    Undo.RecordObjects(springBones.ToArray(), "SpringBone cleanup");
                     foreach (var springBone in springBones)
                     {
                         springBone.capsuleColliders = springBone.capsuleColliders.Where(item => item != null).ToArray();
@@ -287,7 +265,7 @@ namespace Unity.Animations.SpringBones
                 .Where(item => item.GetComponents<T>().Length > 1);
             if (duplicateObjects.Any())
             {
-                Undo.RecordObjects(duplicateObjects.ToArray(), Styles.textRemoveDuplicateComponents);
+                Undo.RecordObjects(duplicateObjects.ToArray(), "Remove duplicate components");
                 foreach (var transform in duplicateObjects)
                 {
                     var components = transform.GetComponents<T>();
