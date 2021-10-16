@@ -1,38 +1,15 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class SaveSpringBoneSetupWindow : EditorWindow
     {
-        private static class Styles
-        {
-            public static readonly string editorWindowTitle = Localization.Tr("Save SpringBone Setup");
-            public static readonly string textSpringBoneRoot = Localization.Tr("SpringBone Root");
-            public static readonly string textSaveSpringBoneSetup = Localization.Tr("Save SpringBone Setup");
-            public static readonly string textSaveSpringBone = Localization.Tr("Save SpringBone");
-            public static readonly string textFileOverwriteFormat = Localization.Tr("File already exists. Overwrite?:{0}\n\n");
-            public static readonly string textOverwrite = Localization.Tr("Overwrite");
-            public static readonly string textSavedFormat = Localization.Tr("Saved.: {0}");
-            public static readonly string textCancel = Localization.Tr("Cancel");
-            
-            public static readonly GUIContent labelExportSetting = new GUIContent(Localization.Tr("Export Setting"));
-            public static readonly GUIContent labelSpringBone = new GUIContent(Localization.Tr("SpringBone"));
-            public static readonly GUIContent labelCollider = new GUIContent(Localization.Tr("Collider"));
-            public static readonly GUIContent labelGetRootFromSelection = new GUIContent(Localization.Tr("Get root from selection"));
-            public static readonly GUIContent labelSaveToCSV = new GUIContent(Localization.Tr("Save to CSV"));
-        }
-
         public static void ShowWindow()
         {
-            var editorWindow = GetWindow<SaveSpringBoneSetupWindow>(Styles.editorWindowTitle);
+            var editorWindow = GetWindow<SaveSpringBoneSetupWindow>(
+                "スプリングボーンセットアップを保存");
             if (editorWindow != null)
             {
                 editorWindow.SelectObjectsFromSelection();
@@ -75,11 +52,11 @@ namespace Unity.Animations.SpringBones
                 exportSettings = new SpringBoneSerialization.ExportSettings();
             }
 
-            GUI.Label(uiRect, Styles.labelExportSetting, SpringBoneGUIStyles.HeaderLabelStyle);
+            GUI.Label(uiRect, "書き出し設定", SpringBoneGUIStyles.HeaderLabelStyle);
             uiRect.y += uiRect.height;
-            exportSettings.ExportSpringBones = GUI.Toggle(uiRect, exportSettings.ExportSpringBones, Styles.labelSpringBone, SpringBoneGUIStyles.ToggleStyle);
+            exportSettings.ExportSpringBones = GUI.Toggle(uiRect, exportSettings.ExportSpringBones, "スプリングボーン", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
-            exportSettings.ExportCollision = GUI.Toggle(uiRect, exportSettings.ExportCollision,Styles.labelCollider, SpringBoneGUIStyles.ToggleStyle);
+            exportSettings.ExportCollision = GUI.Toggle(uiRect, exportSettings.ExportCollision, "コライダー", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
         }
 
@@ -95,9 +72,9 @@ namespace Unity.Animations.SpringBones
             var yPos = UISpacing;
 
             springBoneRoot = LoadSpringBoneSetupWindow.DoObjectPicker(
-                Styles.textSpringBoneRoot, springBoneRoot, uiWidth, UIRowHeight, ref yPos);
+                "スプリングボーンのルート", springBoneRoot, uiWidth, UIRowHeight, ref yPos);
             var buttonRect = new Rect(UISpacing, yPos, uiWidth, ButtonHeight);
-            if (GUI.Button(buttonRect, Styles.labelGetRootFromSelection, SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(buttonRect, "選択からルートを取得", SpringBoneGUIStyles.ButtonStyle))
             {
                 SelectObjectsFromSelection();
             }
@@ -107,7 +84,7 @@ namespace Unity.Animations.SpringBones
             ShowExportSettingsUI(ref buttonRect);
             if (springBoneRoot != null)
             {
-                if (GUI.Button(buttonRect, Styles.labelSaveToCSV, SpringBoneGUIStyles.ButtonStyle))
+                if (GUI.Button(buttonRect, "CSVを保存", SpringBoneGUIStyles.ButtonStyle))
                 {
                     BrowseAndSaveSpringSetup();
                 }
@@ -121,14 +98,13 @@ namespace Unity.Animations.SpringBones
             var initialFileName = springBoneRoot.name + "_Dynamics.csv";
 
             var path = EditorUtility.SaveFilePanel(
-                Styles.textSaveSpringBoneSetup, "", initialFileName, "csv");
+                "スプリングボーンセットアップを保存", "", initialFileName, "csv");
             if (path.Length == 0) { return; }
 
             if (System.IO.File.Exists(path))
             {
-                var overwriteMessage = string.Format(Styles.textFileOverwriteFormat, path);
-                if (!EditorUtility.DisplayDialog(Styles.textSaveSpringBone, overwriteMessage, Styles.textOverwrite, 
-                    Styles.textCancel))
+                var overwriteMessage = "ファイルは既に存在します。上書きしますか？\n\n" + path;
+                if (!EditorUtility.DisplayDialog("スプリングボーン保存", overwriteMessage, "上書き", "キャンセル"))
                 {
                     return;
                 }
@@ -138,7 +114,7 @@ namespace Unity.Animations.SpringBones
             if (FileUtil.WriteAllText(path, sourceText))
             {
                 AssetDatabase.Refresh();
-                Debug.LogFormat(Styles.textSavedFormat, path);
+                Debug.Log("保存しました: " + path);
             }
         }
     }

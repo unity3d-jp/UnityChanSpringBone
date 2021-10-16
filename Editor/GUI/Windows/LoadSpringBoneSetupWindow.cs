@@ -1,50 +1,15 @@
 ﻿using System.Linq;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class LoadSpringBoneSetupWindow : EditorWindow
     {
-        private static class Styles
-        {
-            public static readonly string editorWindowTitle = Localization.Tr("Load spring bone setup");
-            public static readonly string stopPlayModeMessage = Localization.Tr("Do not setup in Play Mode");
-            public static readonly string selectObjectRootsMessage = Localization.Tr("Select parent object of the spring bone");
-            public static readonly string resultFormat = Localization.Tr("Set up complete:{0}\nNumber of bones: {1} Number of colliders: {2}");
-            public static readonly string csvFile = Localization.Tr("CSV File");
-            public static readonly string textFile = Localization.Tr("Text File");
-            public static readonly string loadSpringBoneSetup = Localization.Tr("Load spring bone setup");
-            public static readonly string errorFormat = Localization.Tr(
-                "SpringBone setup failed.\n"
-                + "Souce data may contain errors,\n"
-                + "or the data don't match the character.\n"
-                + "Please refer console logs for further info.\n"
-                + "\n"
-                + "Character: {0}\n"
-                + "\n"
-                + "Path: {1}");
-
-            public static readonly string springBoneSetup = Localization.Tr("SpringBone Setup");
-            public static readonly string springBoneSetupFailedFormat = Localization.Tr("SpringBone Setup failed:{0}\nPath:{1}");
-            public static readonly string labelSpringBoneRoot = Localization.Tr("SpringBone Root");
-            
-            public static readonly GUIContent labelLoadingConfig = new GUIContent(Localization.Tr("Loading Configuration"));
-            public static readonly GUIContent labelSpringBone = new GUIContent(Localization.Tr("SpringBone"));
-            public static readonly GUIContent labelCollider = new GUIContent(Localization.Tr("Collider"));
-            
-            public static readonly GUIContent labelSelectFromRoot = new GUIContent(Localization.Tr("Get root from selection"));
-            public static readonly GUIContent labelSetupLoadCSV = new GUIContent(Localization.Tr("Set up from CSV file"));
-        }
-
         public static void ShowWindow()
         {
-            var editorWindow = GetWindow<LoadSpringBoneSetupWindow>(Styles.editorWindowTitle);
+            var editorWindow = GetWindow<LoadSpringBoneSetupWindow>(
+                "スプリングボーンセットアップを読み込む");
             if (editorWindow != null)
             {
                 editorWindow.SelectObjectsFromSelection();
@@ -70,6 +35,8 @@ namespace Unity.Animations.SpringBones
 
         // private
 
+        private const string StopPlayModeMessage = "再生モードでセットアップしないでください。";
+        private const string SelectObjectRootsMessage = "スプリングボーンの親オブジェクトを指定してください。";
         private const int UIRowHeight = 24;
         private const int UISpacing = 8;
         private const int LabelWidth = 200;
@@ -107,11 +74,11 @@ namespace Unity.Animations.SpringBones
                 importSettings = new DynamicsSetup.ImportSettings();
             }
 
-            GUI.Label(uiRect, Styles.labelLoadingConfig, SpringBoneGUIStyles.HeaderLabelStyle);
+            GUI.Label(uiRect, "読み込み設定", SpringBoneGUIStyles.HeaderLabelStyle);
             uiRect.y += uiRect.height;
-            importSettings.ImportSpringBones = GUI.Toggle(uiRect, importSettings.ImportSpringBones, Styles.labelSpringBone, SpringBoneGUIStyles.ToggleStyle);
+            importSettings.ImportSpringBones = GUI.Toggle(uiRect, importSettings.ImportSpringBones, "スプリングボーン", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
-            importSettings.ImportCollision = GUI.Toggle(uiRect, importSettings.ImportCollision, Styles.labelCollider, SpringBoneGUIStyles.ToggleStyle);
+            importSettings.ImportCollision = GUI.Toggle(uiRect, importSettings.ImportCollision, "コライダー", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
         }
 
@@ -123,9 +90,9 @@ namespace Unity.Animations.SpringBones
 
             var uiWidth = (int)position.width - UISpacing * 2;
             var yPos = UISpacing;
-            springBoneRoot = DoObjectPicker(Styles.labelSpringBoneRoot, springBoneRoot, uiWidth, UIRowHeight, ref yPos);
+            springBoneRoot = DoObjectPicker("スプリングボーンのルート", springBoneRoot, uiWidth, UIRowHeight, ref yPos);
             var buttonRect = new Rect(UISpacing, yPos, uiWidth, ButtonHeight);
-            if (GUI.Button(buttonRect, Styles.labelSelectFromRoot, SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(buttonRect, "選択からルートを取得", SpringBoneGUIStyles.ButtonStyle))
             {
                 SelectObjectsFromSelection();
             }
@@ -137,7 +104,7 @@ namespace Unity.Animations.SpringBones
             string errorMessage;
             if (IsOkayToSetup(out errorMessage))
             {
-                if (GUI.Button(buttonRect, Styles.labelSetupLoadCSV, SpringBoneGUIStyles.ButtonStyle))
+                if (GUI.Button(buttonRect, "CSVを読み込んでセットアップ", SpringBoneGUIStyles.ButtonStyle))
                 {
                     BrowseAndLoadSpringSetup();
                 }
@@ -155,13 +122,13 @@ namespace Unity.Animations.SpringBones
             errorMessage = "";
             if (EditorApplication.isPlaying)
             {
-                errorMessage = Styles.stopPlayModeMessage;
+                errorMessage = StopPlayModeMessage;
                 return false;
             }
 
             if (springBoneRoot == null)
             {
-                errorMessage = Styles.selectObjectRootsMessage;
+                errorMessage = SelectObjectRootsMessage;
                 return false;
             }
             return true;
@@ -202,10 +169,11 @@ namespace Unity.Animations.SpringBones
                 setup.Build();
                 AssetDatabase.Refresh();
 
+                const string ResultFormat = "セットアップ完了: {0}\nボーン数: {1} コライダー数: {2}";
                 var boneCount = springBoneRoot.GetComponentsInChildren<SpringBone>(true).Length;
                 var colliderCount = SpringColliderSetup.GetColliderTypes()
                     .Sum(type => springBoneRoot.GetComponentsInChildren(type, true).Length);
-                var resultMessage = string.Format(Styles.resultFormat, path, boneCount, colliderCount);
+                var resultMessage = string.Format(ResultFormat, path, boneCount, colliderCount);
                 Debug.Log(resultMessage);
             }
 
@@ -216,7 +184,8 @@ namespace Unity.Animations.SpringBones
 
         private void BrowseAndLoadSpringSetup()
         {
-            if (!IsOkayToSetup(out var checkErrorMessage))
+            string checkErrorMessage;
+            if (!IsOkayToSetup(out checkErrorMessage))
             {
                 Debug.LogError(checkErrorMessage);
                 return;
@@ -224,9 +193,9 @@ namespace Unity.Animations.SpringBones
 
             // var initialPath = "";
             var initialDirectory = ""; // System.IO.Path.GetDirectoryName(initialPath);
-            var fileFilters = new string[] { Styles.csvFile, "csv", Styles.textFile, "txt" };
+            var fileFilters = new string[] { "CSVファイル", "csv", "テキストファイル", "txt" };
             var path = EditorUtility.OpenFilePanelWithFilters(
-                Styles.loadSpringBoneSetup, initialDirectory, fileFilters);
+                "スプリングボーンセットアップを読み込む", initialDirectory, fileFilters);
             if (path.Length == 0) { return; }
 
             var sourceText = FileUtil.ReadAllText(path);
@@ -247,10 +216,16 @@ namespace Unity.Animations.SpringBones
             }
             else
             {
-                var resultErrorMessage = string.Format(Styles.errorFormat, springBoneRoot.name, path);
-                EditorUtility.DisplayDialog(Styles.springBoneSetup, resultErrorMessage, "OK");
-                Debug.LogFormat(LogType.Error, LogOption.None, springBoneRoot, 
-                    Styles.springBoneSetupFailedFormat, springBoneRoot.name, path);
+                const string ErrorFormat =
+                    "スプリングボーンセットアップが失敗しました。\n"
+                    + "元データにエラーがあるか、もしくは\n"
+                    + "キャラクターにデータが一致しません。\n"
+                    + "詳しくはConsoleのログをご覧下さい。\n\n"
+                    + "キャラクター: {0}\n\n"
+                    + "パス: {1}";
+                var resultErrorMessage = string.Format(ErrorFormat, springBoneRoot.name, path);
+                EditorUtility.DisplayDialog("スプリングボーンセットアップ", resultErrorMessage, "OK");
+                Debug.LogError("スプリングボーンセットアップ失敗: " + springBoneRoot.name + "\n" + path);
             }
             Close();
         }

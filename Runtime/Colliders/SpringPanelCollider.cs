@@ -32,14 +32,14 @@ namespace Unity.Animations.SpringBones
             }
 
             var localTailPosition = transform.InverseTransformPoint(tailPosition);
-            var localTailRadius = transform.InverseTransformVector(tailRadius, 0f, 0f).magnitude;
+            var localTailRadius = transform.InverseTransformDirection(tailRadius, 0f, 0f).magnitude;
             if (localTailPosition.z >= localTailRadius)
             {
                 return SpringBone.CollisionStatus.NoCollision;
             }
 
             var localHeadPosition = transform.InverseTransformPoint(headPosition);
-            var localLength = transform.InverseTransformVector(length, 0f, 0f).magnitude;
+            var localLength = transform.InverseTransformDirection(length, 0f, 0f).magnitude;
 
             var halfWidth = 0.5f * width;
             var halfHeight = 0.5f * height;

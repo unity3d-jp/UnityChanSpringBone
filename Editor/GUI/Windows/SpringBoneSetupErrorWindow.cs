@@ -2,29 +2,11 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class SpringBoneSetupErrorWindow : EditorWindow
     {
-        private static class Styles
-        {
-            public static readonly string editorWindowTitle = Localization.Tr("Setup Dynamics");
-            
-            public static readonly GUIContent labelAskDynamicError = new GUIContent(Localization.Tr("There are errors in dynamics setup. Do you want to create only ones without error(s)?"));
-            public static readonly GUIContent labelSpringBoneRoot = new GUIContent(Localization.Tr("SpringBone Root"));
-            public static readonly GUIContent labelColliderRoot = new GUIContent(Localization.Tr("Collider Root"));
-            public static readonly GUIContent labelPath = new GUIContent(Localization.Tr("Path"));
-            public static readonly GUIContent labelCreate = new GUIContent(Localization.Tr("Create"));
-            public static readonly GUIContent labelCancel = new GUIContent(Localization.Tr("Cancel"));
-            public static readonly GUIContent labelError = new GUIContent(Localization.Tr("Error"));
-        }
-
         public interface IConfirmAction
         {
             void Perform();
@@ -39,7 +21,7 @@ namespace Unity.Animations.SpringBones
             IConfirmAction onConfirm
         )
         {
-            var window = GetWindow<SpringBoneSetupErrorWindow>(Styles.editorWindowTitle);
+            var window = GetWindow<SpringBoneSetupErrorWindow>("ダイナミクスセットアップ");
             window.springBoneRoot = springBoneRoot;
             window.colliderRoot = colliderRoot;
             window.filePath = path;
@@ -59,23 +41,23 @@ namespace Unity.Animations.SpringBones
         private void OnGUI()
         {
             EditorGUILayout.Space();
-            GUILayout.Label(Styles.labelAskDynamicError);
+            GUILayout.Label("ダイナミクスセットアップに一部エラーが出ているものがあります。正常なものだけ作成しますか？");
             EditorGUILayout.Space();
-            EditorGUILayout.ObjectField(Styles.labelSpringBoneRoot, springBoneRoot, typeof(GameObject), true);
-            EditorGUILayout.ObjectField(Styles.labelColliderRoot, colliderRoot, typeof(GameObject), true);
-            EditorGUILayout.TextField(Styles.labelPath, filePath);
+            EditorGUILayout.ObjectField("スプリングボーンのルート", springBoneRoot, typeof(GameObject), true);
+            EditorGUILayout.ObjectField("コライダーのルート", colliderRoot, typeof(GameObject), true);
+            EditorGUILayout.TextField("パス", filePath);
             EditorGUILayout.Space();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Styles.labelCreate))
+            if (GUILayout.Button("作成"))
             {
                 onConfirmAction.Perform();
                 Close();
             }
-            if (GUILayout.Button(Styles.labelCancel)) { Close(); }
+            if (GUILayout.Button("キャンセル")) { Close(); }
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
 
-            GUILayout.Label(Styles.labelError);
+            GUILayout.Label("エラー");
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true);
             foreach (var error in errors)
             {

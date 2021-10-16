@@ -3,31 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class FindGameObjectsWindow : EditorWindow
     {
-        private static class Styles
-        {
-            public static readonly string editorWindowTitle = Localization.Tr("Name Selector Tool");
-
-            public static readonly string textName = Localization.Tr("Name");
-            public static readonly string textIgnore = Localization.Tr("Ignore");
-            public static readonly string textComponent = Localization.Tr("Component");
-            public static readonly string textSelect = Localization.Tr("Select");
-            public static readonly string textSelectingMultipleObjectFormat = Localization.Tr("Selecting {0} objects");
-        }
-
-        [MenuItem("Window/Animation/SpringBone/Name Selector Tool")]
+        [MenuItem("UTJ/名前で選択窓")]
         public static void ShowWindow()
         {
-            var window = GetWindow<FindGameObjectsWindow>(Styles.editorWindowTitle);
+            var window = GetWindow<FindGameObjectsWindow>("名前で選択");
             window.OnShow();
         }
 
@@ -294,18 +278,18 @@ namespace Unity.Animations.SpringBones
 
             var rowWidth = position.width - Spacing * 2f;
             var fieldPositions = GetTextFieldPositions(Spacing, Spacing, rowWidth, RowHeight, Spacing);
-            DoTextFieldWithClearButton(ref fieldPositions, Styles.textName, ref objectPattern, RestartSearchCountdown, SearchNameField);
+            DoTextFieldWithClearButton(ref fieldPositions, "名前", ref objectPattern, RestartSearchCountdown, SearchNameField);
             fieldPositions.y += RowOffset;
-            DoTextFieldWithClearButton(ref fieldPositions, Styles.textIgnore, ref ignorePattern, RestartSearchCountdown);
+            DoTextFieldWithClearButton(ref fieldPositions, "無視", ref ignorePattern, RestartSearchCountdown);
             fieldPositions.y += RowOffset;
-            DoTextFieldWithClearButton(ref fieldPositions, Styles.textComponent, ref componentPattern, RestartSearchCountdown);
+            DoTextFieldWithClearButton(ref fieldPositions, "コンポーネント", ref componentPattern, RestartSearchCountdown);
             fieldPositions.y += RowOffset;
 
             var rowRect = new Rect(fieldPositions.x, fieldPositions.y, rowWidth, RowHeight);
-            if (GUI.Button(rowRect, Styles.textSelect)) { FindAndSelectObjects(); }
+            if (GUI.Button(rowRect, "選択")) { FindAndSelectObjects(); }
 
             rowRect.y += RowOffset;
-            var message = string.Format(Styles.textSelectingMultipleObjectFormat, Selection.objects.Length);
+            var message = Selection.objects.Length.ToString() + " 個のオブジェクトを選択中";
             GUI.Label(rowRect, message);
 
             if (isInitialShow)

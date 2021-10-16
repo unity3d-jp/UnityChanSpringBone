@@ -1,58 +1,15 @@
 ﻿using System.Linq;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_2020_2_OR_NEWER
-using Localization = UnityEditor.L10n;
-#else
-using Localization = UnityEditor.Localization.Editor.Localization;
-#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class SpringBoneWindow : EditorWindow
     {
-        private static class Styles
-        {
-            public static readonly string editorWindowTitle = Localization.Tr("SpringBone");
-
-            public static readonly string logIconLoadFailedFormat = Localization.Tr("Icon load failed:\nPath:{0}");
-            public static readonly string logIconDirNotFound = Localization.Tr("SpringBoneWindow icon directory not found");
-            
-            public static readonly string labelDynamicCSV = Localization.Tr("Dynamics CSV");
-            public static readonly string labelLoad = Localization.Tr("Load");
-            public static readonly string labelSave = Localization.Tr("Save");
-            public static readonly string labelSpringBone = (Localization.Tr("SpringBone"));
-            public static readonly string labelSpringBoneAdd = (Localization.Tr("Add\nSpringBone"));
-            public static readonly string labelCreateOrigin = (Localization.Tr("Create Origin"));
-            public static readonly string labelCreateManager = (Localization.Tr("Create or Update Manager"));
-            public static readonly string labelMirrorBone = (Localization.Tr("Mirror SpringBones"));
-            public static readonly string labelSelectOneAndChild = (Localization.Tr("Select this and child bones"));
-            public static readonly string labelDeleteBone = (Localization.Tr("Delete SpringBone"));
-            public static readonly string labelDeleteBoneAndManager = (Localization.Tr("Delete Managers and Bones of Selection and Children"));
-            public static readonly string labelCollision = (Localization.Tr("Collision"));
-            public static readonly string labelSphere = (Localization.Tr("Sphere"));
-            public static readonly string labelCapsule = (Localization.Tr("Capsule"));
-            public static readonly string labelQuad = (Localization.Tr("Quad"));
-            public static readonly string labelFitCapsulePos = (Localization.Tr("Fit capsule place to parent"));
-            public static readonly string labelExcludeCollisionFromBone = (Localization.Tr("Exclude collision from SpringBone"));
-            public static readonly string labelDeleteCollier = (Localization.Tr("Delete collider of selection and children"));
-            public static readonly string labelCleanup = (Localization.Tr("Cleanup"));
-            public static readonly string labelShow = (Localization.Tr("Show"));
-            
-            public static readonly string labelShowOnlySelectedBones = (Localization.Tr("Show only selected bones"));
-            public static readonly string labelShowBoneCollision = (Localization.Tr("Show bone collisions"));
-            public static readonly string labelShowOnlySelectedCollider = (Localization.Tr("Show only selected colliders"));
-            public static readonly string labelShowBoneName = (Localization.Tr("Show bone names"));
-        }
-
-        private const string kIconDirectoryPath = "Packages/com.unity.springbone/Editor/GUI/Icons"; 
-        
-
-        [MenuItem("Window/Animation/SpringBone/SpringBone")]
+        [MenuItem("UTJ/スプリングボーン窓")]
         public static void ShowWindow()
         {
-            var window = GetWindow<SpringBoneWindow>(Styles.editorWindowTitle);
+            var window = GetWindow<SpringBoneWindow>("スプリングボーン");
             window.OnShow();
         }
 
@@ -79,24 +36,41 @@ namespace Unity.Animations.SpringBones
             var iconTexture = AssetDatabase.LoadAssetAtPath<Texture>(iconPath);
             if (iconTexture == null)
             {
-                Debug.LogFormat(LogType.Warning, LogOption.None, null, Styles.logIconDirNotFound, iconPath);
+                Debug.LogWarning("アイコン読み込み失敗:\n" + iconPath);
             }
             return iconTexture;
+        }
+
+        private static string FindIconAssetDirectory()
+        {
+            // Try to find the icons in a way such that the user can put the Dynamics folder anywhere
+            return DirectoryUtil.GetFilesRecursively(Application.dataPath, "SpringCapsuleIcon.tga")
+                .Select(path => PathUtil.NormalizePath(path))
+                .Where(path => path.ToLowerInvariant().Contains("editor/springbone/gui/icons/"))
+                .Select(path => PathUtil.SystemPathToAssetPath(System.IO.Path.GetDirectoryName(path)))
+                .FirstOrDefault();
         }
 
         private void InitializeIcons()
         {
             if (headerIcon != null) { return; }
 
-            headerIcon = LoadIcon(kIconDirectoryPath, "SpringIcon.tga");
-            newDocumentIcon = LoadIcon(kIconDirectoryPath, "NewDocumentHS.png");
-            openDocumentIcon = LoadIcon(kIconDirectoryPath, "OpenHH.bmp");
-            saveDocumentIcon = LoadIcon(kIconDirectoryPath, "SaveHH.bmp");
-            deleteIcon = LoadIcon(kIconDirectoryPath, "Delete.png");
-            pivotIcon = LoadIcon(kIconDirectoryPath, "Pivot.png");
-            sphereIcon = LoadIcon(kIconDirectoryPath, "SpringSphereIcon.tga");
-            capsuleIcon = LoadIcon(kIconDirectoryPath, "SpringCapsuleIcon.tga");
-            panelIcon = LoadIcon(kIconDirectoryPath, "SpringPanelIcon.tga");
+            var iconDirectory = FindIconAssetDirectory();
+            if (iconDirectory == null)
+            {
+                Debug.LogWarning("SpringBoneWindowのアイコンディレクトリーが見つかりません");
+                return;
+            }
+
+            headerIcon = LoadIcon(iconDirectory, "SpringIcon.tga");
+            newDocumentIcon = LoadIcon(iconDirectory, "NewDocumentHS.png");
+            openDocumentIcon = LoadIcon(iconDirectory, "OpenHH.bmp");
+            saveDocumentIcon = LoadIcon(iconDirectory, "SaveHH.bmp");
+            deleteIcon = LoadIcon(iconDirectory, "Delete.png");
+            pivotIcon = LoadIcon(iconDirectory, "Pivot.png");
+            sphereIcon = LoadIcon(iconDirectory, "SpringSphereIcon.tga");
+            capsuleIcon = LoadIcon(iconDirectory, "SpringCapsuleIcon.tga");
+            panelIcon = LoadIcon(iconDirectory, "SpringPanelIcon.tga");
         }
 
         private void InitializeButtonGroups()
@@ -112,48 +86,48 @@ namespace Unity.Animations.SpringBones
             {
                 new GUIElements.Column(new GUIElements.IElement[]
                 {
-                    new GUIElements.Label(Styles.labelDynamicCSV, headerLabelStyleProvider),
+                    new GUIElements.Label("ダイナミクスCSV", headerLabelStyleProvider),
                     new GUIElements.Row(new GUIElements.IElement[]
                     {
-                        new GUIElements.Button(Styles.labelLoad, LoadSpringBoneSetupWindow.ShowWindow, openDocumentIcon, buttonLabelStyleProvider),
-                        new GUIElements.Button(Styles.labelSave, SaveSpringBoneSetupWindow.ShowWindow, saveDocumentIcon, buttonLabelStyleProvider)
+                        new GUIElements.Button("読み込む", LoadSpringBoneSetupWindow.ShowWindow, openDocumentIcon, buttonLabelStyleProvider),
+                        new GUIElements.Button("保存", SaveSpringBoneSetupWindow.ShowWindow, saveDocumentIcon, buttonLabelStyleProvider)
                     },
                     BigButtonHeight)
                 }),
 
                 new GUIElements.Column(new GUIElements.IElement[]
                 {
-                    new GUIElements.Label(Styles.labelSpringBone, headerLabelStyleProvider),
+                    new GUIElements.Label("スプリングボーン", headerLabelStyleProvider),
                     new GUIElements.Row(new GUIElements.IElement[]
                     {
-                        new GUIElements.Button(Styles.labelSpringBoneAdd, SpringBoneEditorActions.AssignSpringBonesRecursively, headerIcon, buttonLabelStyleProvider),
-                        new GUIElements.Button(Styles.labelCreateOrigin, SpringBoneEditorActions.CreatePivotForSpringBones, pivotIcon, buttonLabelStyleProvider)
+                        new GUIElements.Button("スプリング\nボーン追加", SpringBoneEditorActions.AssignSpringBonesRecursively, headerIcon, buttonLabelStyleProvider),
+                        new GUIElements.Button("基点作成", SpringBoneEditorActions.CreatePivotForSpringBones, pivotIcon, buttonLabelStyleProvider)
                     },
                     BigButtonHeight),
-                    new GUIElements.Button(Styles.labelCreateManager, SpringBoneEditorActions.AddToOrUpdateSpringManagerInSelection, newDocumentIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("マネージャーを作成／更新", SpringBoneEditorActions.AddToOrUpdateSpringManagerInSelection, newDocumentIcon, buttonLabelStyleProvider),
                     //new GUIElements.Button("初期セットアップを行う", SpringBoneAutoSetupWindow.ShowWindow, newDocumentIcon, buttonLabelStyleProvider),
                     //new GUIElements.Button("初期ボーンリストに合わせる", SpringBoneEditorActions.PromptToUpdateSpringBonesFromList, null, buttonLabelStyleProvider),
                     new GUIElements.Separator(),
-                    new GUIElements.Button(Styles.labelMirrorBone, MirrorSpringBoneWindow.ShowWindow, null, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelSelectOneAndChild, SpringBoneEditorActions.SelectChildSpringBones, null, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelDeleteBone, SpringBoneEditorActions.DeleteSelectedBones, deleteIcon, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelDeleteBoneAndManager, SpringBoneEditorActions.DeleteSpringBonesAndManagers, deleteIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("スプリングボーンをミラー", MirrorSpringBoneWindow.ShowWindow, null, buttonLabelStyleProvider),
+                    new GUIElements.Button("選択と子供のスプリングボーンを選択", SpringBoneEditorActions.SelectChildSpringBones, null, buttonLabelStyleProvider),
+                    new GUIElements.Button("選択スプリングボーンを削除", SpringBoneEditorActions.DeleteSelectedBones, deleteIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("選択と子供のマネージャーとボーンを削除", SpringBoneEditorActions.DeleteSpringBonesAndManagers, deleteIcon, buttonLabelStyleProvider),
                 }),
 
                 new GUIElements.Column(new GUIElements.IElement[]
                 {
-                    new GUIElements.Label(Styles.labelCollision, headerLabelStyleProvider),
+                    new GUIElements.Label("コリジョン", headerLabelStyleProvider),
                     new GUIElements.Row(new GUIElements.IElement[]
                     {
-                        new GUIElements.Button(Styles.labelSphere, SpringColliderEditorActions.CreateSphereColliderBeneathSelectedObjects, sphereIcon, buttonLabelStyleProvider),
-                        new GUIElements.Button(Styles.labelCapsule, SpringColliderEditorActions.CreateCapsuleColliderBeneathSelectedObjects, capsuleIcon, buttonLabelStyleProvider),
-                        new GUIElements.Button(Styles.labelQuad, SpringColliderEditorActions.CreatePanelColliderBeneathSelectedObjects, panelIcon, buttonLabelStyleProvider),
+                        new GUIElements.Button("球体", SpringColliderEditorActions.CreateSphereColliderBeneathSelectedObjects, sphereIcon, buttonLabelStyleProvider),
+                        new GUIElements.Button("カプセル", SpringColliderEditorActions.CreateCapsuleColliderBeneathSelectedObjects, capsuleIcon, buttonLabelStyleProvider),
+                        new GUIElements.Button("板", SpringColliderEditorActions.CreatePanelColliderBeneathSelectedObjects, panelIcon, buttonLabelStyleProvider),
                     },
                     BigButtonHeight),
-                    new GUIElements.Button(Styles.labelFitCapsulePos, SpringColliderEditorActions.AlignSelectedCapsulesToParents, capsuleIcon, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelExcludeCollisionFromBone, SpringColliderEditorActions.DeleteCollidersFromSelectedSpringBones, deleteIcon, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelDeleteCollier, SpringColliderEditorActions.DeleteAllChildCollidersFromSelection, deleteIcon, buttonLabelStyleProvider),
-                    new GUIElements.Button(Styles.labelCleanup, SpringColliderEditorActions.CleanUpDynamics, deleteIcon, buttonLabelStyleProvider)
+                    new GUIElements.Button("カプセルの位置を親に合わせる", SpringColliderEditorActions.AlignSelectedCapsulesToParents, capsuleIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("スプリングボーンからコリジョンを外す", SpringColliderEditorActions.DeleteCollidersFromSelectedSpringBones, deleteIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("選択と子供のコライダーを削除", SpringColliderEditorActions.DeleteAllChildCollidersFromSelection, deleteIcon, buttonLabelStyleProvider),
+                    new GUIElements.Button("クリーンナップ", SpringColliderEditorActions.CleanUpDynamics, deleteIcon, buttonLabelStyleProvider)
                 })
             },
             false,
@@ -216,17 +190,17 @@ namespace Unity.Animations.SpringBones
             System.Func<GUIStyle> toggleStyleProvider = () => SpringBoneGUIStyles.ToggleStyle;
             var headerColumn = new GUIElements.Column(
                 new GUIElements.IElement[] {
-                    new GUIElements.Label(Styles.labelShow, headerLabelStyleProvider),
+                    new GUIElements.Label("表示", headerLabelStyleProvider),
                     new GUIElements.Row(new GUIElements.IElement[]
                         {
-                            new GUIElements.Toggle(Styles.labelShowOnlySelectedBones, () => settings.onlyShowSelectedBones, newValue => { settings.onlyShowSelectedBones = newValue; needToRepaint = true; }, toggleStyleProvider),
-                            new GUIElements.Toggle(Styles.labelShowBoneCollision, () => settings.showBoneSpheres, newValue => { settings.showBoneSpheres = newValue; needToRepaint = true; }, toggleStyleProvider),
+                            new GUIElements.Toggle("選択ボーンのみ表示", () => settings.onlyShowSelectedBones, newValue => { settings.onlyShowSelectedBones = newValue; needToRepaint = true; }, toggleStyleProvider),
+                            new GUIElements.Toggle("ボーンのコリジョンを表示", () => settings.showBoneSpheres, newValue => { settings.showBoneSpheres = newValue; needToRepaint = true; }, toggleStyleProvider),
                         },
                         GUIElements.RowHeight),
                     new GUIElements.Row(new GUIElements.IElement[]
                         {
-                            new GUIElements.Toggle(Styles.labelShowOnlySelectedCollider, () => settings.onlyShowSelectedColliders, newValue => { settings.onlyShowSelectedColliders = newValue; needToRepaint = true; }, toggleStyleProvider),
-                            new GUIElements.Toggle(Styles.labelShowBoneName, () => settings.showBoneNames, newValue => { settings.showBoneNames = newValue; needToRepaint = true; }, toggleStyleProvider)
+                            new GUIElements.Toggle("選択コライダーのみ表示", () => settings.onlyShowSelectedColliders, newValue => { settings.onlyShowSelectedColliders = newValue; needToRepaint = true; }, toggleStyleProvider),
+                            new GUIElements.Toggle("ボーン名を表示", () => settings.showBoneNames, newValue => { settings.showBoneNames = newValue; needToRepaint = true; }, toggleStyleProvider)
                         },
                         GUIElements.RowHeight),
                 },
