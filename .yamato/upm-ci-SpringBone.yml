@@ -1,8 +1,6 @@
 yamato_name: SpringBone
 test_editors:
   - version: 2019.4
-  - version: 2020.1
-  - version: 2020.2  
   - version: 2020.3
   - version: 2021.1
 test_platforms:
@@ -10,10 +8,10 @@ test_platforms:
     type: Unity::VM
     image: package-ci/win10:stable
     flavor: b1.large
-#  - name: mac
-#    type: Unity::VM::osx
-#    image: buildfarm/mac:stable
-#    flavor: m1.mac
+  - name: mac
+    type: Unity::VM::osx
+    image: buildfarm/mac:stable
+    flavor: m1.mac
 ---
 pack:
   name: Pack {{ yamato_name }}
