@@ -3,14 +3,35 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Unity.Animations.SpringBones.GameObjectExtensions;
+#if UNITY_2020_2_OR_NEWER
+using Localization = UnityEditor.L10n;
+#else
+using Localization = UnityEditor.Localization.Editor.Localization;
+#endif
 
 namespace Unity.Animations.SpringBones
 {
     public class MirrorSpringBoneWindow : EditorWindow
     {
+        private static class Styles
+        {
+            public static readonly string editorWindowTitle = Localization.Tr("SpringBone Mirror");
+            
+            public static readonly GUIContent labelDoMirror = new GUIContent(Localization.Tr("Do Mirror"));
+            public static readonly GUIContent labelGetFromSelection = new GUIContent(Localization.Tr("Get from selection"));
+
+            public static readonly GUIContent labelSelectAllCopyDst = new GUIContent(Localization.Tr("Select all copy destination"));
+            public static readonly GUIContent labelSelectAllCopySrc = new GUIContent(Localization.Tr("Select all copy source"));
+            public static readonly GUIContent labelSelectAll = new GUIContent(Localization.Tr("Select All"));
+            public static readonly GUIContent labelConfigXbZero = new GUIContent(Localization.Tr("Set bone where X > 0"));
+            public static readonly GUIContent labelConfigXlZero = new GUIContent(Localization.Tr("Set bone where X < 0"));
+            public static readonly GUIContent labelSrc = new GUIContent(Localization.Tr("Source"));
+            public static readonly GUIContent labelDst = new GUIContent(Localization.Tr("→ Destination"));
+        }
+
         public static void ShowWindow()
         {
-            var window = GetWindow<MirrorSpringBoneWindow>("SpringBoneミラー");
+            var window = GetWindow<MirrorSpringBoneWindow>(Styles.editorWindowTitle);
             window.Show();
             window.OnShow();
         }
@@ -57,7 +78,7 @@ namespace Unity.Animations.SpringBones
             uiRect = ShowUtilityButtons(uiRect);
             uiRect = ShowBoneList(uiRect);
 
-            if (GUI.Button(uiRect, "ミラーを行う", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, Styles.labelDoMirror, SpringBoneGUIStyles.ButtonStyle))
             {
                 PerformMirror();
             }
@@ -66,7 +87,7 @@ namespace Unity.Animations.SpringBones
         private Rect ShowUtilityButtons(Rect uiRect)
         {
             var buttonOffset = uiRect.height + Spacing;
-            if (GUI.Button(uiRect, "選択から取得", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, Styles.labelGetFromSelection, SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireBonesFromSelection();
             }
@@ -74,12 +95,12 @@ namespace Unity.Animations.SpringBones
 
             var halfRectWidth = 0.5f * (uiRect.width - Spacing);
             var halfButtonRect = new Rect(uiRect.x, uiRect.y, halfRectWidth, uiRect.height);
-            if (GUI.Button(halfButtonRect, "X < 0のボーンを元に設定", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, Styles.labelConfigXlZero, SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireSourceBonesOnSideOfAxis(true);
             }
             halfButtonRect.x += halfRectWidth + Spacing;
-            if (GUI.Button(halfButtonRect, "X > 0のボーンを元に設定", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, Styles.labelConfigXbZero, SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireSourceBonesOnSideOfAxis(false);
             }
@@ -87,20 +108,20 @@ namespace Unity.Animations.SpringBones
 
             halfButtonRect.x = uiRect.x;
             halfButtonRect.y = uiRect.y;
-            if (GUI.Button(halfButtonRect, "コピー元を全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, Styles.labelSelectAllCopySrc, SpringBoneGUIStyles.ButtonStyle))
             {
                 var sourceBones = boneEntries.Select(entry => entry.sourceBone).Where(bone => bone != null);
                 if (sourceBones.Any()) { Selection.objects = sourceBones.Select(bone => bone.gameObject).ToArray(); }
             }
             halfButtonRect.x += halfRectWidth + Spacing;
-            if (GUI.Button(halfButtonRect, "コピー先を全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, Styles.labelSelectAllCopyDst, SpringBoneGUIStyles.ButtonStyle))
             {
                 var targetBones = boneEntries.Select(entry => entry.targetBone).Where(bone => bone != null);
                 if (targetBones.Any()) { Selection.objects = targetBones.Select(bone => bone.gameObject).ToArray(); }
             }
             uiRect.y += buttonOffset;
 
-            if (GUI.Button(uiRect, "全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, Styles.labelSelectAll, SpringBoneGUIStyles.ButtonStyle))
             {
                 var bonesToSelect = new List<SpringBone>();
                 bonesToSelect.AddRange(boneEntries.Select(entry => entry.sourceBone).Where(bone => bone != null));
@@ -117,9 +138,9 @@ namespace Unity.Animations.SpringBones
             var listBoxBottom = position.height - (Spacing * 2f + RowHeight);
 
             var headerRowRect = new Rect(uiRect.x, uiRect.y, uiRect.width * 0.5f, uiRect.height);
-            GUI.Label(headerRowRect, "元", SpringBoneGUIStyles.LabelStyle);
+            GUI.Label(headerRowRect, Styles.labelSrc, SpringBoneGUIStyles.LabelStyle);
             headerRowRect.x += headerRowRect.width;
-            GUI.Label(headerRowRect, "→ 先", SpringBoneGUIStyles.LabelStyle);
+            GUI.Label(headerRowRect, Styles.labelDst, SpringBoneGUIStyles.LabelStyle);
             uiRect.y += uiRect.height;
 
             const float ScrollbarWidth = 20f;
