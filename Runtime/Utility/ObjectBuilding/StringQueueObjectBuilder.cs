@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Unity.Animations.SpringBones
 {
@@ -11,7 +14,7 @@ namespace Unity.Animations.SpringBones
         {
             public static float DequeueFloat(this Queue<string> queue)
             {
-                return float.Parse(queue.Dequeue());
+                return float.Parse(queue.Dequeue(), CultureInfo.InvariantCulture);
             }
 
             public static int DequeueInt(this Queue<string> queue)
@@ -21,9 +24,9 @@ namespace Unity.Animations.SpringBones
 
             public static Vector3 DequeueVector3(this Queue<string> queue)
             {
-                var x = float.Parse(queue.Dequeue());
-                var y = float.Parse(queue.Dequeue());
-                var z = float.Parse(queue.Dequeue());
+                var x = float.Parse(queue.Dequeue(), CultureInfo.InvariantCulture);
+                var y = float.Parse(queue.Dequeue(), CultureInfo.InvariantCulture);
+                var z = float.Parse(queue.Dequeue(), CultureInfo.InvariantCulture);
                 return new Vector3(x, y, z);
             }
 
@@ -162,11 +165,28 @@ namespace Unity.Animations.SpringBones
 
             private static System.Object ParsePrimitiveType(System.Type type, string valueSource)
             {
-                var parseMethod = type.GetMethods()
-                    .Where(method => method.Name == "Parse"
-                        && method.IsStatic
-                        && method.GetParameters().Length == 1)
-                    .FirstOrDefault();
+                // type.Parse(string, IFormatProvider)
+                var parseWithFormatProvider = type
+                    .GetMethods()
+                    .FirstOrDefault(method => method.Name == "Parse"
+                                              && method.IsStatic
+                                              && method.GetParameters().Length == 2
+                                              && method.GetParameters()[1].ParameterType == typeof(IFormatProvider));
+                if (parseWithFormatProvider != null)
+                {
+                    return parseWithFormatProvider.Invoke(null, new System.Object[]
+                    {
+                        valueSource,
+                        CultureInfo.InvariantCulture,
+                    });
+                }
+
+                // type.Parse(string)
+                var parseMethod = type
+                    .GetMethods()
+                    .FirstOrDefault(method => method.Name == "Parse"
+                                              && method.IsStatic
+                                              && method.GetParameters().Length == 1);
                 if (parseMethod != null)
                 {
                     return parseMethod.Invoke(null, new System.Object[] { valueSource });

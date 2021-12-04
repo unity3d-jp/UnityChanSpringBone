@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 
@@ -105,15 +106,20 @@ namespace Unity.Animations.SpringBones
                 float x = 0f;
                 float y = 0f;
                 float z = 0f;
-                succeeded = float.TryParse(items[startIndex], out x)
-                    && float.TryParse(items[startIndex + 1], out y)
-                    && float.TryParse(items[startIndex + 2], out z);
+                succeeded = TryParseWithInvariantCulture(items[startIndex], out x)
+                            && TryParseWithInvariantCulture(items[startIndex + 1], out y)
+                            && TryParseWithInvariantCulture(items[startIndex + 2], out z);
                 if (succeeded)
                 {
                     output.Set(x, y, z);
                 }
             }
             return succeeded;
+        }
+        
+        private static bool TryParseWithInvariantCulture(string s, out float f)
+        {
+            return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out f);
         }
 
         public static List<Record> ParseRecordsFromReader
