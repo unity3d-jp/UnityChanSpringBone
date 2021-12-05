@@ -13,8 +13,12 @@ namespace Unity.Animations.SpringBones
             get { return new string[] { "//", "#", ";" }; }
         }
 
+        private static readonly ICollection<string> BoolFalseItems = new[] { "0", "false" };
+
         public class Record
         {
+            private List<string> items;
+            
             public Record(IEnumerable<string> initialItems)
             {
                 items = initialItems.ToList();
@@ -52,8 +56,6 @@ namespace Unity.Animations.SpringBones
             {
                 return new Queue<string>(items);
             }
-
-            private List<string> items = new List<string>();
         }
 
         // レコードのアイテムを取得。存在しない場合は空の文字列を返す。
@@ -65,9 +67,8 @@ namespace Unity.Animations.SpringBones
         // レコードの数字を取得します。アイテムが空・false・0の場合はfalseを返します
         public static bool GetBool(List<string> items, int index)
         {
-            var falseItems = new List<string> { "0", "false" };
             var itemString = GetString(items, index).Trim().ToLowerInvariant();
-            return itemString.Length > 0 && !falseItems.Contains(itemString);
+            return itemString.Length > 0 && !BoolFalseItems.Contains(itemString);
         }
 
         // レコードの数字を取得します。できなかった場合はfalseを返す。
@@ -88,7 +89,7 @@ namespace Unity.Animations.SpringBones
         {
             var item = GetString(items, index);
             float newValue;
-            var succeeded = float.TryParse(item, out newValue);
+            var succeeded = float.TryParse(item, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out newValue);
             if (succeeded)
             {
                 output = newValue;
@@ -105,9 +106,9 @@ namespace Unity.Animations.SpringBones
                 float x = 0f;
                 float y = 0f;
                 float z = 0f;
-                succeeded = float.TryParse(items[startIndex], out x)
-                    && float.TryParse(items[startIndex + 1], out y)
-                    && float.TryParse(items[startIndex + 2], out z);
+                succeeded = float.TryParse(items[startIndex], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                    && float.TryParse(items[startIndex + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)
+                    && float.TryParse(items[startIndex + 2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out z);
                 if (succeeded)
                 {
                     output.Set(x, y, z);

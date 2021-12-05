@@ -66,7 +66,7 @@ namespace Unity.Animations.SpringBones
                 .Where(item => item.Value == value)
                 .Select(item => item.Key)
                 .FirstOrDefault();
-            return (key != null) ? key : "";
+            return key ?? "";
         }
 
         // private

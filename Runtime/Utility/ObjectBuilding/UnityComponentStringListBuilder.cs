@@ -78,8 +78,7 @@ namespace Unity.Animations.SpringBones
             if (valueMaps != null)
             {
                 var matchingMap = valueMaps
-                    .Where(map => map.Type == type)
-                    .FirstOrDefault();
+                    .FirstOrDefault(map => map.Type == type);
                 if (matchingMap != null)
                 {
                     outputStrings.Add(matchingMap.GetKey(sourceObject));
@@ -98,14 +97,12 @@ namespace Unity.Animations.SpringBones
                     // Arrays are messy...
                     var publicMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
                     var countMethod = publicMethods
-                        .Where(method => method.Name == "GetLength")
-                        .First();
+                        .First(method => method.Name == "GetLength");
                     var itemCount = (int)countMethod.Invoke(sourceObject, new object[] { 0 });
                     var getValueMethod = publicMethods
-                        .Where(method => method.Name == "GetValue"
-                            && method.GetParameters().Count() == 1
-                            && method.GetParameters()[0].ParameterType == typeof(int))
-                        .First();
+                        .First(method => method.Name == "GetValue"
+                                         && method.GetParameters().Count() == 1
+                                         && method.GetParameters()[0].ParameterType == typeof(int));
                     var items = new List<System.Object>(itemCount);
                     for (int itemIndex = 0; itemIndex < itemCount; itemIndex++)
                     {
