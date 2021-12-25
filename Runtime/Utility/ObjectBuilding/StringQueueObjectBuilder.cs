@@ -11,7 +11,7 @@ namespace Unity.Animations.SpringBones
         {
             public static float DequeueFloat(this Queue<string> queue)
             {
-                return float.Parse(queue.Dequeue());
+                return float.Parse(queue.Dequeue(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
             }
 
             public static int DequeueInt(this Queue<string> queue)
@@ -21,9 +21,9 @@ namespace Unity.Animations.SpringBones
 
             public static Vector3 DequeueVector3(this Queue<string> queue)
             {
-                var x = float.Parse(queue.Dequeue());
-                var y = float.Parse(queue.Dequeue());
-                var z = float.Parse(queue.Dequeue());
+                var x = float.Parse(queue.Dequeue(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                var y = float.Parse(queue.Dequeue(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                var z = float.Parse(queue.Dequeue(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
                 return new Vector3(x, y, z);
             }
 
@@ -34,10 +34,9 @@ namespace Unity.Animations.SpringBones
                 if (parentName.Length > 0)
                 {
                     var children = gameObject.GetComponentsInChildren<Transform>(true);
-                    newParent = Object.FindObjectsOfType<Transform>()
-                        .Where(item => item.name == parentName
-                            && !children.Contains(item))
-                        .FirstOrDefault();
+                    newParent = Object
+                        .FindObjectsOfType<Transform>()
+                        .FirstOrDefault(item => item.name == parentName && !children.Contains(item));
                     if (newParent == null)
                     {
                         Debug.LogError("Valid parent not found: " + parentName);
@@ -162,15 +161,15 @@ namespace Unity.Animations.SpringBones
 
             private static System.Object ParsePrimitiveType(System.Type type, string valueSource)
             {
-                var parseMethod = type.GetMethods()
-                    .Where(method => method.Name == "Parse"
-                        && method.IsStatic
-                        && method.GetParameters().Length == 1)
-                    .FirstOrDefault();
+                var parseMethodFormatProvider = type.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null,
+                    new [] { typeof(string), typeof(System.IFormatProvider) }, null);
+                if (parseMethodFormatProvider != null)
+                    return parseMethodFormatProvider.Invoke(null, new System.Object[] { valueSource, System.Globalization.CultureInfo.InvariantCulture });
+                
+                var parseMethod = type.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null,
+                    new [] { typeof(string) }, null);
                 if (parseMethod != null)
-                {
                     return parseMethod.Invoke(null, new System.Object[] { valueSource });
-                }
 
                 Debug.LogError("Parse not found: " + type.ToString());
                 return null;
@@ -209,8 +208,7 @@ namespace Unity.Animations.SpringBones
                 if (valueMaps != null)
                 {
                     var matchingMap = valueMaps
-                        .Where(map => map.Type == type)
-                        .FirstOrDefault();
+                        .FirstOrDefault(map => map.Type == type);
                     if (matchingMap != null)
                     {
                         return matchingMap[queue.Dequeue()];

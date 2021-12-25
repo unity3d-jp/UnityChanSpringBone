@@ -113,9 +113,8 @@ namespace Unity.Animations.SpringBones
         private static Transform GetChildByName(Transform parent, string name)
         {
             return Enumerable.Range(0, parent.childCount)
-                .Select(index => parent.GetChild(index))
-                .Where(child => child.name == name)
-                .FirstOrDefault();
+                .Select(parent.GetChild)
+                .FirstOrDefault(child => child.name == name);
         }
 
         private static T TryToFindComponent<T>(GameObject gameObject, string name) where T : Component
