@@ -10,36 +10,36 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("SpringBone");
+            public static readonly string editorWindowTitle = L10n.Tr("SpringBone");
 
-            public static readonly string logIconLoadFailedFormat = Localization.Tr("Icon load failed:\nPath:{0}");
-            public static readonly string logIconDirNotFound = Localization.Tr("SpringBoneWindow icon directory not found");
+            public static readonly string logIconLoadFailedFormat = L10n.Tr("Icon load failed:\nPath:{0}");
+            public static readonly string logIconDirNotFound = L10n.Tr("SpringBoneWindow icon directory not found");
             
-            public static readonly string labelDynamicCSV = Localization.Tr("Dynamics CSV");
-            public static readonly string labelLoad = Localization.Tr("Load");
-            public static readonly string labelSave = Localization.Tr("Save");
-            public static readonly string labelSpringBone = (Localization.Tr("SpringBone"));
-            public static readonly string labelSpringBoneAdd = (Localization.Tr("Add\nSpringBone"));
-            public static readonly string labelCreateOrigin = (Localization.Tr("Create Origin"));
-            public static readonly string labelCreateManager = (Localization.Tr("Create or Update Manager"));
-            public static readonly string labelMirrorBone = (Localization.Tr("Mirror SpringBones"));
-            public static readonly string labelSelectOneAndChild = (Localization.Tr("Select this and child bones"));
-            public static readonly string labelDeleteBone = (Localization.Tr("Delete SpringBone"));
-            public static readonly string labelDeleteBoneAndManager = (Localization.Tr("Delete Managers and Bones of Selection and Children"));
-            public static readonly string labelCollision = (Localization.Tr("Collision"));
-            public static readonly string labelSphere = (Localization.Tr("Sphere"));
-            public static readonly string labelCapsule = (Localization.Tr("Capsule"));
-            public static readonly string labelQuad = (Localization.Tr("Quad"));
-            public static readonly string labelFitCapsulePos = (Localization.Tr("Fit capsule place to parent"));
-            public static readonly string labelExcludeCollisionFromBone = (Localization.Tr("Exclude collision from SpringBone"));
-            public static readonly string labelDeleteCollier = (Localization.Tr("Delete collider of selection and children"));
-            public static readonly string labelCleanup = (Localization.Tr("Cleanup"));
-            public static readonly string labelShow = (Localization.Tr("Show"));
+            public static readonly string labelDynamicCSV = L10n.Tr("Dynamics CSV");
+            public static readonly string labelLoad = L10n.Tr("Load");
+            public static readonly string labelSave = L10n.Tr("Save");
+            public static readonly string labelSpringBone = (L10n.Tr("SpringBone"));
+            public static readonly string labelSpringBoneAdd = (L10n.Tr("Add\nSpringBone"));
+            public static readonly string labelCreateOrigin = (L10n.Tr("Create Origin"));
+            public static readonly string labelCreateManager = (L10n.Tr("Create or Update Manager"));
+            public static readonly string labelMirrorBone = (L10n.Tr("Mirror SpringBones"));
+            public static readonly string labelSelectOneAndChild = (L10n.Tr("Select this and child bones"));
+            public static readonly string labelDeleteBone = (L10n.Tr("Delete SpringBone"));
+            public static readonly string labelDeleteBoneAndManager = (L10n.Tr("Delete Managers and Bones of Selection and Children"));
+            public static readonly string labelCollision = (L10n.Tr("Collision"));
+            public static readonly string labelSphere = (L10n.Tr("Sphere"));
+            public static readonly string labelCapsule = (L10n.Tr("Capsule"));
+            public static readonly string labelQuad = (L10n.Tr("Quad"));
+            public static readonly string labelFitCapsulePos = (L10n.Tr("Fit capsule place to parent"));
+            public static readonly string labelExcludeCollisionFromBone = (L10n.Tr("Exclude collision from SpringBone"));
+            public static readonly string labelDeleteCollier = (L10n.Tr("Delete collider of selection and children"));
+            public static readonly string labelCleanup = (L10n.Tr("Cleanup"));
+            public static readonly string labelShow = (L10n.Tr("Show"));
             
-            public static readonly string labelShowOnlySelectedBones = (Localization.Tr("Show only selected bones"));
-            public static readonly string labelShowBoneCollision = (Localization.Tr("Show bone collisions"));
-            public static readonly string labelShowOnlySelectedCollider = (Localization.Tr("Show only selected colliders"));
-            public static readonly string labelShowBoneName = (Localization.Tr("Show bone names"));
+            public static readonly string labelShowOnlySelectedBones = (L10n.Tr("Show only selected bones"));
+            public static readonly string labelShowBoneCollision = (L10n.Tr("Show bone collisions"));
+            public static readonly string labelShowOnlySelectedCollider = (L10n.Tr("Show only selected colliders"));
+            public static readonly string labelShowBoneName = (L10n.Tr("Show bone names"));
         }
 
         private const string kIconDirectoryPath = "Packages/com.unity.springbone/Editor/GUI/Icons"; 
