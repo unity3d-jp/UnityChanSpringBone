@@ -10,6 +10,8 @@ namespace Unity.Animations.SpringBones
     [CanEditMultipleObjects]
     public class SpringManagerInspector : Editor
     {
+        bool isEngLang => !EditorPrefs.GetBool("UCSB_JLM");
+
         public class InspectorButton<T>
         {
             public InspectorButton(string label, System.Action<T> onPress)
@@ -35,9 +37,9 @@ namespace Unity.Animations.SpringBones
                 if (actionButtons == null || actionButtons.Length == 0)
                 {
                     actionButtons = new[] {
-                        new SpringManagerButton("窓を表示", ShowSpringWindow),
-                        new SpringManagerButton("SpringBoneを全て選択", SelectAllBones),
-                        new SpringManagerButton("SpringBoneリストを更新", UpdateBoneList)
+                        new SpringManagerButton(isEngLang ? "Display Spring Window" : "窓を表示", ShowSpringWindow),
+                        new SpringManagerButton(isEngLang ? "Select All SpringBone" : "SpringBoneを全て選択", SelectAllBones),
+                        new SpringManagerButton(isEngLang ? "Update SpringBone List" : "SpringBoneリストを更新", UpdateBoneList)
                     };
                 }
 
