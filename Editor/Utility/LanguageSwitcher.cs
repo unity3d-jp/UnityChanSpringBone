@@ -8,13 +8,13 @@ public class LanguageSwitcher : MonoBehaviour
     //UCSB Stands for "Unity Chan Spring Bone";
     //JLM Stands for "Japanese Language Mode";
 
-    [MenuItem("UCSB/Set Language To English")]
+    [MenuItem("Window/Animation/SpringBone/Set Language To English")]
     public static void SwitchToEnglish()
     {
         EditorPrefs.SetBool("UCSB_JLM", false);
     }
 
-    [MenuItem("UCSB/Set Language To Japanese")]
+    [MenuItem("Window/Animation/SpringBone/Set Language To Japanese")]
     public static void SwitchToJapanese()
     {
         EditorPrefs.SetBool("UCSB_JLM", true);
