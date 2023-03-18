@@ -13,6 +13,8 @@ namespace Unity.Animations.SpringBones
     [CanEditMultipleObjects]
     public class SpringBoneInspector : Editor
     {
+        bool isEngLang => !EditorPrefs.GetBool("UCSB_JLM");
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -21,7 +23,7 @@ namespace Unity.Animations.SpringBones
 
             var bone = (SpringBone)target;
 
-            if (GUILayout.Button("基点を選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUILayout.Button(isEngLang ? "Select Base Point" : "基点を選択", SpringBoneGUIStyles.ButtonStyle))
             {
                 Selection.objects = targets
                     .Select(item => ((SpringBone)item).pivotNode)
@@ -34,9 +36,9 @@ namespace Unity.Animations.SpringBones
             var managerCount = managers.Length;
             for (int managerIndex = 0; managerIndex < managerCount; managerIndex++)
             {
-                EditorGUILayout.ObjectField("マネージャー", managers[managerIndex], typeof(SpringManager), true);
+                EditorGUILayout.ObjectField(isEngLang ? "Manager" : "マネージャー", managers[managerIndex], typeof(SpringManager), true);
             }
-            var newEnabled = EditorGUILayout.Toggle("有効", bone.enabled);
+            var newEnabled = EditorGUILayout.Toggle(isEngLang ? "Enabled" : "有効", bone.enabled);
             GUILayout.EndVertical();
 
             if (newEnabled != bone.enabled)
@@ -68,7 +70,7 @@ namespace Unity.Animations.SpringBones
                 RenderAngleLimitVisualization();
             }
 
-            showOriginalInspector = EditorGUILayout.Toggle("標準インスペクター表示", showOriginalInspector);
+            showOriginalInspector = EditorGUILayout.Toggle(isEngLang ? "Default Inspector View" : "標準インスペクター表示", showOriginalInspector);
             GUILayout.Space(Spacing);
             if (showOriginalInspector)
             {
@@ -134,8 +136,8 @@ namespace Unity.Animations.SpringBones
             
             GUILayout.BeginVertical("box");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Y 軸角度制限");
-            GUILayout.Label("Z 軸角度制限");
+            GUILayout.Label(isEngLang ? "Y Axis Angle Limit" : "Y 軸角度制限");
+            GUILayout.Label(isEngLang ? "Z Axis Angle Limit" : "Z 軸角度制限");
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
             const float DefaultRectHeight = 100f;
@@ -230,35 +232,35 @@ namespace Unity.Animations.SpringBones
             InitializeData();
 
             var forceProperties = new PropertyInfo[] {
-                new PropertyInfo("stiffnessForce", "硬さ"),
-                new PropertyInfo("dragForce", "空気抵抗"),
-                new PropertyInfo("springForce", "重力"),
-                new PropertyInfo("windInfluence", "風の影響値")
+                new PropertyInfo("stiffnessForce", isEngLang ? "Stiffness" : "硬さ"),
+                new PropertyInfo("dragForce", isEngLang ? "Drag" : "空気抵抗"),
+                new PropertyInfo("springForce", isEngLang ? "Gravity" : "重力"),
+                new PropertyInfo("windInfluence", isEngLang ? "Wind Influence" : "風の影響値")
             };
 
             var angleLimitProperties = new PropertyInfo[] {
-                new PropertyInfo("pivotNode", "基点"),
-                new PropertyInfo("angularStiffness", "回転の硬さ"),
-                new AngleLimitPropertyInfo("yAngleLimits", "Y 軸角度制限"),
-                new AngleLimitPropertyInfo("zAngleLimits", "Z 軸角度制限")
+                new PropertyInfo("pivotNode", isEngLang ? "Base Pivot" : "基点"),
+                new PropertyInfo("angularStiffness", isEngLang ? "Angular Stiffness" : "回転の硬さ"),
+                new AngleLimitPropertyInfo("yAngleLimits", isEngLang ? "Y Axis Angle Limit" : "Y 軸角度制限"),
+                new AngleLimitPropertyInfo("zAngleLimits", isEngLang ? "Z Axis Angle Limit" : "Z 軸角度制限")
             };
 
             var lengthLimitProperties = new PropertyInfo[] {
-                new PropertyInfo("lengthLimitTargets", "ターゲット")
+                new PropertyInfo("lengthLimitTargets", isEngLang ? "Targets" : "ターゲット")
             };
 
             var collisionProperties = new PropertyInfo[] {
-                new PropertyInfo("radius", "半径"),
-                new PropertyInfo("sphereColliders", "球体"),
-                new PropertyInfo("capsuleColliders", "カプセル"),
-                new PropertyInfo("panelColliders", "板")
+                new PropertyInfo("radius", isEngLang ? "Radius" : "半径"),
+                new PropertyInfo("sphereColliders", isEngLang ? "Sphere Colliders" : "球体"),
+                new PropertyInfo("capsuleColliders", isEngLang ? "Capsule Colliders" : "カプセル"),
+                new PropertyInfo("panelColliders", isEngLang ? "Panel Colliders" : "板")
             };
 
             propertySets = new PropertySet[] {
-                new PropertySet("力", forceProperties), 
-                new PropertySet("角度制限", angleLimitProperties),
-                new PropertySet("距離制限", lengthLimitProperties),
-                new PropertySet("当たり判定", collisionProperties),
+                new PropertySet(isEngLang ? "Force" : "力", forceProperties), 
+                new PropertySet(isEngLang ? "Angle Limit" : "角度制限", angleLimitProperties),
+                new PropertySet(isEngLang ? "Length Limit" : "距離制限", lengthLimitProperties),
+                new PropertySet(isEngLang ? "Collision" : "当たり判定", collisionProperties),
             };
 
             foreach (var set in propertySets)

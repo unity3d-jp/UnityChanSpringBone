@@ -11,19 +11,19 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string logStopPlayMode = Localization.Tr("You must stop Playmode first.");
-            public static readonly string textAlignCapsulesToParent = Localization.Tr("Align capsules to parents");
-            public static readonly string textConfirmDeleteCollisions = Localization.Tr("Do you really want to remove collisions from selected SpringBones?");
-            public static readonly string textRemoveCollisions = Localization.Tr("Remove Collisions");
-            public static readonly string textRemove = Localization.Tr("Remove");
-            public static readonly string textCancel = Localization.Tr("Cancel");
-            public static readonly string textRemoveDuplicateComponents = Localization.Tr("Remove duplicate components");
-            public static readonly string textCleanupSpringBone = Localization.Tr("Cleanup SpringBones");
-            public static readonly string textConfirmDynamicCleanup = Localization.Tr("Do you really want to cleanup dynamics?");
-            public static readonly string textCleanupDynamics = Localization.Tr("Cleanup Dynamics");
-            public static readonly string textRemoveAllChildColliders = Localization.Tr("Remove all selected child colliders");
-            public static readonly string textConfirmRemoveAllChildColliders = Localization.Tr("Do you really want to remove all colliders from children?");
-            public static readonly string textRemoveSelectedColliders = Localization.Tr("Remove Colliders");
+            public static readonly string logStopPlayMode = L10n.Tr("You must stop Playmode first.");
+            public static readonly string textAlignCapsulesToParent = L10n.Tr("Align capsules to parents");
+            public static readonly string textConfirmDeleteCollisions = L10n.Tr("Do you really want to remove collisions from selected SpringBones?");
+            public static readonly string textRemoveCollisions = L10n.Tr("Remove Collisions");
+            public static readonly string textRemove = L10n.Tr("Remove");
+            public static readonly string textCancel = L10n.Tr("Cancel");
+            public static readonly string textRemoveDuplicateComponents = L10n.Tr("Remove duplicate components");
+            public static readonly string textCleanupSpringBone = L10n.Tr("Cleanup SpringBones");
+            public static readonly string textConfirmDynamicCleanup = L10n.Tr("Do you really want to cleanup dynamics?");
+            public static readonly string textCleanupDynamics = L10n.Tr("Cleanup Dynamics");
+            public static readonly string textRemoveAllChildColliders = L10n.Tr("Remove all selected child colliders");
+            public static readonly string textConfirmRemoveAllChildColliders = L10n.Tr("Do you really want to remove all colliders from children?");
+            public static readonly string textRemoveSelectedColliders = L10n.Tr("Remove Colliders");
         }
 
         public static IList<GameObject> CreateObjectsWithComponentBeneathSelectedObjects<T>(string suffix) where T : Component

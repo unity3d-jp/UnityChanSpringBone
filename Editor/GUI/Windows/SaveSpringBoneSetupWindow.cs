@@ -10,20 +10,20 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("Save SpringBone Setup");
-            public static readonly string textSpringBoneRoot = Localization.Tr("SpringBone Root");
-            public static readonly string textSaveSpringBoneSetup = Localization.Tr("Save SpringBone Setup");
-            public static readonly string textSaveSpringBone = Localization.Tr("Save SpringBone");
-            public static readonly string textFileOverwriteFormat = Localization.Tr("File already exists. Overwrite?:{0}\n\n");
-            public static readonly string textOverwrite = Localization.Tr("Overwrite");
-            public static readonly string textSavedFormat = Localization.Tr("Saved.: {0}");
-            public static readonly string textCancel = Localization.Tr("Cancel");
+            public static readonly string editorWindowTitle = L10n.Tr("Save SpringBone Setup");
+            public static readonly string textSpringBoneRoot = L10n.Tr("SpringBone Root");
+            public static readonly string textSaveSpringBoneSetup = L10n.Tr("Save SpringBone Setup");
+            public static readonly string textSaveSpringBone = L10n.Tr("Save SpringBone");
+            public static readonly string textFileOverwriteFormat = L10n.Tr("File already exists. Overwrite?:{0}\n\n");
+            public static readonly string textOverwrite = L10n.Tr("Overwrite");
+            public static readonly string textSavedFormat = L10n.Tr("Saved.: {0}");
+            public static readonly string textCancel = L10n.Tr("Cancel");
             
-            public static readonly GUIContent labelExportSetting = new GUIContent(Localization.Tr("Export Setting"));
-            public static readonly GUIContent labelSpringBone = new GUIContent(Localization.Tr("SpringBone"));
-            public static readonly GUIContent labelCollider = new GUIContent(Localization.Tr("Collider"));
-            public static readonly GUIContent labelGetRootFromSelection = new GUIContent(Localization.Tr("Get root from selection"));
-            public static readonly GUIContent labelSaveToCSV = new GUIContent(Localization.Tr("Save to CSV"));
+            public static readonly GUIContent labelExportSetting = new GUIContent(L10n.Tr("Export Setting"));
+            public static readonly GUIContent labelSpringBone = new GUIContent(L10n.Tr("SpringBone"));
+            public static readonly GUIContent labelCollider = new GUIContent(L10n.Tr("Collider"));
+            public static readonly GUIContent labelGetRootFromSelection = new GUIContent(L10n.Tr("Get root from selection"));
+            public static readonly GUIContent labelSaveToCSV = new GUIContent(L10n.Tr("Save to CSV"));
         }
 
         public static void ShowWindow()

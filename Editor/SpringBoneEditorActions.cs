@@ -11,25 +11,25 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string logStopPlayMode = Localization.Tr("You must stop Playmode first.");
-            public static readonly string logSelectOneOrMoreObjects = Localization.Tr("Select one or more objects.");
-            public static readonly string logSelectOnlyOneSpringManager = Localization.Tr("Select only one SpringManager");
+            public static readonly string logStopPlayMode = L10n.Tr("You must stop Playmode first.");
+            public static readonly string logSelectOneOrMoreObjects = L10n.Tr("Select one or more objects.");
+            public static readonly string logSelectOnlyOneSpringManager = L10n.Tr("Select only one SpringManager");
 
-            public static readonly string textDelete = Localization.Tr("Delete");
-            public static readonly string textCancel = Localization.Tr("Cancel");
-            public static readonly string textUpdate = Localization.Tr("Update");
+            public static readonly string textDelete = L10n.Tr("Delete");
+            public static readonly string textCancel = L10n.Tr("Cancel");
+            public static readonly string textUpdate = L10n.Tr("Update");
             
-            public static readonly string textDeleteSpringBoneAndManager = Localization.Tr("Delete SpringBone and Manager");
-            public static readonly string textDeleteSelectedBones = Localization.Tr("Delete selected bones");
+            public static readonly string textDeleteSpringBoneAndManager = L10n.Tr("Delete SpringBone and Manager");
+            public static readonly string textDeleteSelectedBones = L10n.Tr("Delete selected bones");
             
-            public static readonly string textUpdateFromBoneList = Localization.Tr("Update from bone list");
+            public static readonly string textUpdateFromBoneList = L10n.Tr("Update from bone list");
             
-            public static readonly string textConfirmRemoveAllBoneAndManagerFormat = Localization.Tr(
+            public static readonly string textConfirmRemoveAllBoneAndManagerFormat = L10n.Tr(
                 "Do you really want to remove all\n" + 
                 "SpringBones and managers under this object?\n" +
                 "\n{0}");
             
-            public static readonly string textConfirmUpdateBonesFromListFormat = Localization.Tr(
+            public static readonly string textConfirmUpdateBonesFromListFormat = L10n.Tr(
                 "Do you want to update secondary bones from bone list?\n" +
                     "\nThis will remove all SpringBones that are not listed,\n" +
                     "and will add SpringBones missing in model.\n" +

@@ -9,14 +9,14 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("Load spring bone setup");
-            public static readonly string stopPlayModeMessage = Localization.Tr("Do not setup in Play Mode");
-            public static readonly string selectObjectRootsMessage = Localization.Tr("Select parent object of the spring bone");
-            public static readonly string resultFormat = Localization.Tr("Set up complete:{0}\nNumber of bones: {1} Number of colliders: {2}");
-            public static readonly string csvFile = Localization.Tr("CSV File");
-            public static readonly string textFile = Localization.Tr("Text File");
-            public static readonly string loadSpringBoneSetup = Localization.Tr("Load spring bone setup");
-            public static readonly string errorFormat = Localization.Tr(
+            public static readonly string editorWindowTitle = L10n.Tr("Load spring bone setup");
+            public static readonly string stopPlayModeMessage = L10n.Tr("Do not setup in Play Mode");
+            public static readonly string selectObjectRootsMessage = L10n.Tr("Select parent object of the spring bone");
+            public static readonly string resultFormat = L10n.Tr("Set up complete:{0}\nNumber of bones: {1} Number of colliders: {2}");
+            public static readonly string csvFile = L10n.Tr("CSV File");
+            public static readonly string textFile = L10n.Tr("Text File");
+            public static readonly string loadSpringBoneSetup = L10n.Tr("Load spring bone setup");
+            public static readonly string errorFormat = L10n.Tr(
                 "SpringBone setup failed.\n"
                 + "Souce data may contain errors,\n"
                 + "or the data don't match the character.\n"
@@ -26,16 +26,16 @@ namespace Unity.Animations.SpringBones
                 + "\n"
                 + "Path: {1}");
 
-            public static readonly string springBoneSetup = Localization.Tr("SpringBone Setup");
-            public static readonly string springBoneSetupFailedFormat = Localization.Tr("SpringBone Setup failed:{0}\nPath:{1}");
-            public static readonly string labelSpringBoneRoot = Localization.Tr("SpringBone Root");
+            public static readonly string springBoneSetup = L10n.Tr("SpringBone Setup");
+            public static readonly string springBoneSetupFailedFormat = L10n.Tr("SpringBone Setup failed:{0}\nPath:{1}");
+            public static readonly string labelSpringBoneRoot = L10n.Tr("SpringBone Root");
             
-            public static readonly GUIContent labelLoadingConfig = new GUIContent(Localization.Tr("Loading Configuration"));
-            public static readonly GUIContent labelSpringBone = new GUIContent(Localization.Tr("SpringBone"));
-            public static readonly GUIContent labelCollider = new GUIContent(Localization.Tr("Collider"));
+            public static readonly GUIContent labelLoadingConfig = new GUIContent(L10n.Tr("Loading Configuration"));
+            public static readonly GUIContent labelSpringBone = new GUIContent(L10n.Tr("SpringBone"));
+            public static readonly GUIContent labelCollider = new GUIContent(L10n.Tr("Collider"));
             
-            public static readonly GUIContent labelSelectFromRoot = new GUIContent(Localization.Tr("Get root from selection"));
-            public static readonly GUIContent labelSetupLoadCSV = new GUIContent(Localization.Tr("Set up from CSV file"));
+            public static readonly GUIContent labelSelectFromRoot = new GUIContent(L10n.Tr("Get root from selection"));
+            public static readonly GUIContent labelSetupLoadCSV = new GUIContent(L10n.Tr("Set up from CSV file"));
         }
 
         public static void ShowWindow()

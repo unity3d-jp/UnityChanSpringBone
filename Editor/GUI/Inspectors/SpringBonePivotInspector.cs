@@ -9,11 +9,13 @@ namespace Unity.Animations.SpringBones
     [CanEditMultipleObjects]
     public class SpringBonePivotInspector : Editor
     {
+        bool isEngLang => !EditorPrefs.GetBool("UCSB_JLM");
+
         public override void OnInspectorGUI()
         {
             InitializeData();
 
-            if (GUILayout.Button("ボーンを選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUILayout.Button(isEngLang ? "Select bone" : "ボーンを選択", SpringBoneGUIStyles.ButtonStyle))
             {
                 Selection.objects = bones.Select(bone => bone.gameObject).ToArray();
             }

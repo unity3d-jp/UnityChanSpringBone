@@ -11,13 +11,13 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("Name Selector Tool");
+            public static readonly string editorWindowTitle = L10n.Tr("Name Selector Tool");
 
-            public static readonly string textName = Localization.Tr("Name");
-            public static readonly string textIgnore = Localization.Tr("Ignore");
-            public static readonly string textComponent = Localization.Tr("Component");
-            public static readonly string textSelect = Localization.Tr("Select");
-            public static readonly string textSelectingMultipleObjectFormat = Localization.Tr("Selecting {0} objects");
+            public static readonly string textName = L10n.Tr("Name");
+            public static readonly string textIgnore = L10n.Tr("Ignore");
+            public static readonly string textComponent = L10n.Tr("Component");
+            public static readonly string textSelect = L10n.Tr("Select");
+            public static readonly string textSelectingMultipleObjectFormat = L10n.Tr("Selecting {0} objects");
         }
 
         [MenuItem("Window/Animation/SpringBone/Name Selector Tool")]

@@ -10,15 +10,15 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("Setup Dynamics");
+            public static readonly string editorWindowTitle = L10n.Tr("Setup Dynamics");
             
-            public static readonly GUIContent labelAskDynamicError = new GUIContent(Localization.Tr("There are errors in dynamics setup. Do you want to create only ones without error(s)?"));
-            public static readonly GUIContent labelSpringBoneRoot = new GUIContent(Localization.Tr("SpringBone Root"));
-            public static readonly GUIContent labelColliderRoot = new GUIContent(Localization.Tr("Collider Root"));
-            public static readonly GUIContent labelPath = new GUIContent(Localization.Tr("Path"));
-            public static readonly GUIContent labelCreate = new GUIContent(Localization.Tr("Create"));
-            public static readonly GUIContent labelCancel = new GUIContent(Localization.Tr("Cancel"));
-            public static readonly GUIContent labelError = new GUIContent(Localization.Tr("Error"));
+            public static readonly GUIContent labelAskDynamicError = new GUIContent(L10n.Tr("There are errors in dynamics setup. Do you want to create only ones without error(s)?"));
+            public static readonly GUIContent labelSpringBoneRoot = new GUIContent(L10n.Tr("SpringBone Root"));
+            public static readonly GUIContent labelColliderRoot = new GUIContent(L10n.Tr("Collider Root"));
+            public static readonly GUIContent labelPath = new GUIContent(L10n.Tr("Path"));
+            public static readonly GUIContent labelCreate = new GUIContent(L10n.Tr("Create"));
+            public static readonly GUIContent labelCancel = new GUIContent(L10n.Tr("Cancel"));
+            public static readonly GUIContent labelError = new GUIContent(L10n.Tr("Error"));
         }
 
         public interface IConfirmAction

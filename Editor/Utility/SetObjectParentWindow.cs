@@ -9,10 +9,10 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("Parenting Tool");
+            public static readonly string editorWindowTitle = L10n.Tr("Parenting Tool");
 
-            public static readonly GUIContent labelNewParent = new GUIContent(Localization.Tr("New Parent"));
-            public static readonly GUIContent labelSetParent = new GUIContent(Localization.Tr("Set Parent"));
+            public static readonly GUIContent labelNewParent = new GUIContent(L10n.Tr("New Parent"));
+            public static readonly GUIContent labelSetParent = new GUIContent(L10n.Tr("Set Parent"));
         }
 
 

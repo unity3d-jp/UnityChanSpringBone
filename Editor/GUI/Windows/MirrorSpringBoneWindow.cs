@@ -11,18 +11,18 @@ namespace Unity.Animations.SpringBones
     {
         private static class Styles
         {
-            public static readonly string editorWindowTitle = Localization.Tr("SpringBone Mirror");
+            public static readonly string editorWindowTitle = L10n.Tr("SpringBone Mirror");
             
-            public static readonly GUIContent labelDoMirror = new GUIContent(Localization.Tr("Do Mirror"));
-            public static readonly GUIContent labelGetFromSelection = new GUIContent(Localization.Tr("Get from selection"));
+            public static readonly GUIContent labelDoMirror = new GUIContent(L10n.Tr("Do Mirror"));
+            public static readonly GUIContent labelGetFromSelection = new GUIContent(L10n.Tr("Get from selection"));
 
-            public static readonly GUIContent labelSelectAllCopyDst = new GUIContent(Localization.Tr("Select all copy destination"));
-            public static readonly GUIContent labelSelectAllCopySrc = new GUIContent(Localization.Tr("Select all copy source"));
-            public static readonly GUIContent labelSelectAll = new GUIContent(Localization.Tr("Select All"));
-            public static readonly GUIContent labelConfigXbZero = new GUIContent(Localization.Tr("Set bone where X > 0"));
-            public static readonly GUIContent labelConfigXlZero = new GUIContent(Localization.Tr("Set bone where X < 0"));
-            public static readonly GUIContent labelSrc = new GUIContent(Localization.Tr("Source"));
-            public static readonly GUIContent labelDst = new GUIContent(Localization.Tr("→ Destination"));
+            public static readonly GUIContent labelSelectAllCopyDst = new GUIContent(L10n.Tr("Select all copy destination"));
+            public static readonly GUIContent labelSelectAllCopySrc = new GUIContent(L10n.Tr("Select all copy source"));
+            public static readonly GUIContent labelSelectAll = new GUIContent(L10n.Tr("Select All"));
+            public static readonly GUIContent labelConfigXbZero = new GUIContent(L10n.Tr("Set bone where X > 0"));
+            public static readonly GUIContent labelConfigXlZero = new GUIContent(L10n.Tr("Set bone where X < 0"));
+            public static readonly GUIContent labelSrc = new GUIContent(L10n.Tr("Source"));
+            public static readonly GUIContent labelDst = new GUIContent(L10n.Tr("→ Destination"));
         }
 
         public static void ShowWindow()
