@@ -1,3 +1,3 @@
 ﻿using UnityEditor.Localization.Editor;
  
-[assembly: Localization]
+[assembly: UnityEditor.Localization]
